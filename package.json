@@ -1,0 +1,17 @@
+{
+  "name": "break-my-system",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "bun --env-file=.env run --filter '*' dev",
+    "dev:server": "bun --env-file=.env run --filter @break-my-system/server dev",
+    "dev:web": "bun --env-file=.env run --filter @break-my-system/web dev",
+    "build": "bun --env-file=.env run --filter '*' build",
+    "test": "bun --env-file=.env run --filter @break-my-system/server test",
+    "db:generate": "bun --env-file=.env run --filter @break-my-system/server db:generate",
+    "db:migrate": "bun --env-file=.env run --filter @break-my-system/server db:migrate",
+    "db:studio": "bun --env-file=.env run --filter @break-my-system/server db:studio",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
+  }
+}
