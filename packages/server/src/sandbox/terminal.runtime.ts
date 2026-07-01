@@ -1,5 +1,6 @@
-import type {RedisClientType} from "redis";
+import {createClient, type RedisClientType} from "redis";
 import type {Sandbox} from "./sandbox.runtime";
+import {appEnv} from "../common/env";
 
 export type TermClientState =
   | "none"
@@ -34,9 +35,42 @@ export const TerminalRuntime = {
     return terminal;
   },
 
-  async connect(terminal: Terminal) {},
+  async close(t: Terminal, s?: Sandbox) {
+    if (t.connection) {
+      await t.connection.close();
+    }
 
-  async requireTerminalConnection(terminal: Terminal, url?: string) {},
+    t.connection = null;
+    if (s) {
+      s.terminals.delete(t.id);
+    }
+  },
 
-  async runCommand(terminal: Terminal, command: string[]) {},
+  async requireTerminalClient(terminal: Terminal, url?: string) {
+    if (terminal.connection?.isReady) {
+      return terminal.connection;
+    }
+
+    const client = createClient({
+      url: url ?? appEnv.redisThingUrl,
+    }) as RedisClientType;
+    terminal.connection = client;
+
+    await client.connect();
+    return client;
+  },
+
+  async runCommand(terminal: Terminal, command: string[]) {
+    const client = await this.requireTerminalClient(terminal);
+    terminal.lastUsed = new Date().toISOString();
+    const response = await client.sendCommand(command);
+    terminal.commandCount++;
+    terminal.lastUsed = new Date().toISOString();
+
+    return {
+      terminalId: terminal.id,
+      requestCommand: command,
+      response,
+    };
+  },
 };

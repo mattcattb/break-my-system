@@ -1,10 +1,15 @@
 import {createMiddleware} from "hono/factory";
-import * as sandboxRuntime from "./sandbox.runtime";
-import {bearerAuth} from "hono/bearer-auth";
 import {NotFoundException} from "../common/errors";
+import {
+  closeSandbox,
+  getSandbox,
+  hasDurationExceeded,
+  hasTtlExpired,
+  type Sandbox,
+} from "./sandbox.runtime";
 
 export const requireSandboxMW = createMiddleware<{
-  Variables: {sandboxId: string};
+  Variables: {sandboxId: string; sandbox: Sandbox};
 }>(async (c, next) => {
   const headers = c.req.header();
   const sandboxId = headers["X-Sandbox-Id"];
@@ -14,12 +19,18 @@ export const requireSandboxMW = createMiddleware<{
   }
 
   // here we use the bearer auth token as the sandboxId here, throwing if doenst exist or getting it from the map
-  const sandbox = sandboxRuntime.getSandbox(sandboxId);
+  const sandbox = getSandbox(sandboxId);
 
   if (!sandbox) {
     throw new NotFoundException("Sandbox does not exist");
   }
 
+  if (hasTtlExpired(sandbox) || hasDurationExceeded(sandbox)) {
+    await closeSandbox(sandbox);
+    throw new NotFoundException(`Sandbox ${sandboxId} has expired`);
+  }
+
   c.set("sandboxId", sandbox.id);
+  c.set("sandbox", sandbox);
   next();
 });
