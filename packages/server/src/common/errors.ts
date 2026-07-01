@@ -13,7 +13,10 @@ export const ERROR_MESSAGES = {
   VALIDATION_ERROR: "Validation failed",
   SERVICE_ERROR: "Service error",
   INTERNAL_ERROR: "Internal server error",
+  CONFLICT_ERROR: "Server conflict error",
 } as const;
+
+export const ERROR_CODES = {} as const;
 
 export type ErrorCode = keyof typeof ERROR_MESSAGES;
 
@@ -24,6 +27,7 @@ const STATUS_TO_CODE: Record<number, ErrorCode> = {
   404: "NOT_FOUND",
   422: "VALIDATION_ERROR",
   500: "INTERNAL_ERROR",
+  409: "CONFLICT_ERROR",
 };
 
 export class AppHttpError extends HTTPException {
@@ -45,6 +49,12 @@ export class AppHttpError extends HTTPException {
 export class BadRequestException extends AppHttpError {
   constructor(message?: string, details?: unknown) {
     super(400, "BAD_REQUEST", message, details);
+  }
+}
+
+export class ConflictException extends AppHttpError {
+  constructor(message?: string, details?: unknown) {
+    super(409, "CONFLICT_ERROR", message, details);
   }
 }
 

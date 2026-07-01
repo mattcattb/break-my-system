@@ -18,6 +18,10 @@ const githubEnvSchema = z.object({
   GITHUB_CLIENT_SECRET: z.string().optional(),
 });
 
+const redisThingEnvSchema = z.object({
+  redisThingUrl: z.string().min(1),
+});
+
 const appEnvSchema = z.object({
   ...betterAuthSchema.shape,
   ...googleEnvSchema.shape,
@@ -34,6 +38,7 @@ const appEnvSchema = z.object({
   CORS_ORIGINS: z.string().optional(),
 
   NODE_ENV: z.string().optional(),
+  ...redisThingEnvSchema.shape,
 
   PORT: z.preprocess((value) => {
     if (typeof value === "string" && value.trim() !== "") {

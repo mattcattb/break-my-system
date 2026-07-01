@@ -74,3 +74,7 @@ If local Postgres or Redis ports are already taken, change `POSTGRES_PORT`, `RED
 3. Replace `runMockCommand` with a tiny client that talks to `go-redis`.
 4. Add command history persistence only after the first real module works.
 5. Use `xterm.js` only when the app needs full terminal behavior.
+
+## Planning Notes
+
+A more detailed architecture and product planning outline is available in [docs/architecture-plan.md](docs/architecture-plan.md).
