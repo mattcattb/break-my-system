@@ -60,6 +60,59 @@ describe("sandbox routes", () => {
     expect(Number(response.status)).toBe(400);
   });
 
+  test("disconnects an idle terminal without deleting its history", async () => {
+    const sandbox = await (await client.api.sandbox.$post()).json();
+    const terminal = await (
+      await client.api.sandbox[":sandboxId"].terminal.$post({
+        param: {sandboxId: sandbox.id},
+      })
+    ).json();
+
+    const response = await client.api.sandbox[":sandboxId"].terminal[
+      ":terminalId"
+    ].disconnect.$post({
+      param: {sandboxId: sandbox.id, terminalId: terminal.id},
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id: terminal.id,
+      status: "disconnected",
+      commandCount: 0,
+    });
+
+    const statusResponse = await client.api.sandbox[":sandboxId"].terminal[
+      ":terminalId"
+    ].redis.status.$get({
+      param: {sandboxId: sandbox.id, terminalId: terminal.id},
+    });
+
+    expect(await statusResponse.json()).toEqual({
+      pong: null,
+      keyCount: null,
+      supportedCommandCount: null,
+      status: "disconnected",
+    });
+  });
+
+  test("rejects an empty key inspection before contacting Redis", async () => {
+    const sandbox = await (await client.api.sandbox.$post()).json();
+    const terminal = await (
+      await client.api.sandbox[":sandboxId"].terminal.$post({
+        param: {sandboxId: sandbox.id},
+      })
+    ).json();
+
+    const response = await client.api.sandbox[":sandboxId"].terminal[
+      ":terminalId"
+    ].redis.inspect.$post({
+      param: {sandboxId: sandbox.id, terminalId: terminal.id},
+      json: {key: ""},
+    });
+
+    expect(Number(response.status)).toBe(400);
+  });
+
   test("deletes a terminal without deleting its sandbox", async () => {
     const sandbox = await (await client.api.sandbox.$post()).json();
     const terminal = await (

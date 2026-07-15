@@ -2,11 +2,17 @@ import {createRouter} from "../common/hono";
 import {requireSandboxMW, type SandboxEnv} from "./sandbox.middleware";
 import {
   closeSandbox,
+  connectCommandTerminal,
   createSandbox,
   createSandboxCommandTerminal,
+  disconnectCommandTerminal,
   getCommandTerminalHistory,
+  getCommandTerminalRedisStatus,
   getSandboxSnapshot,
+  inspectCommandTerminalRedisKey,
+  inspectRedisKeyJson,
   listSandboxSnapshots,
+  reconnectCommandTerminal,
   removeSandboxTool,
   sendCommand,
   sendCommandJson,
@@ -53,6 +59,56 @@ export const sandboxController = createRouter<SandboxEnv>()
       200,
     );
   })
+  .post("/:sandboxId/terminal/:terminalId/connect", async (c) => {
+    return c.json(
+      await connectCommandTerminal(
+        c.get("sandbox"),
+        c.req.param("terminalId"),
+      ),
+      200,
+    );
+  })
+  .post("/:sandboxId/terminal/:terminalId/disconnect", async (c) => {
+    return c.json(
+      await disconnectCommandTerminal(
+        c.get("sandbox"),
+        c.req.param("terminalId"),
+      ),
+      200,
+    );
+  })
+  .post("/:sandboxId/terminal/:terminalId/reconnect", async (c) => {
+    return c.json(
+      await reconnectCommandTerminal(
+        c.get("sandbox"),
+        c.req.param("terminalId"),
+      ),
+      200,
+    );
+  })
+  .get("/:sandboxId/terminal/:terminalId/redis/status", async (c) => {
+    return c.json(
+      await getCommandTerminalRedisStatus(
+        c.get("sandbox"),
+        c.req.param("terminalId"),
+      ),
+      200,
+    );
+  })
+  .post(
+    "/:sandboxId/terminal/:terminalId/redis/inspect",
+    zValidator("json", inspectRedisKeyJson),
+    async (c) => {
+      return c.json(
+        await inspectCommandTerminalRedisKey(
+          c.get("sandbox"),
+          c.req.param("terminalId"),
+          c.req.valid("json").key,
+        ),
+        200,
+      );
+    },
+  )
   .delete("/:sandboxId/terminal/:terminalId", async (c) => {
     const sandbox = c.get("sandbox");
     const removed = await removeSandboxTool(sandbox, c.req.param("terminalId"));

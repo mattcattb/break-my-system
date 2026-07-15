@@ -18,6 +18,8 @@ const sandboxKeys = {
   snapshot: (sandboxId: string) => ["sandbox", sandboxId] as const,
   history: (sandboxId: string, terminalId: string) =>
     ["sandbox", sandboxId, "terminal", terminalId, "history"] as const,
+  redisStatus: (sandboxId: string, terminalId: string) =>
+    ["sandbox", sandboxId, "terminal", terminalId, "redis-status"] as const,
 };
 
 const getErrorMessage = (err: unknown) => {
@@ -157,6 +159,42 @@ function RouteComponent() {
       queryClient.invalidateQueries({
         queryKey: sandboxKeys.history(sandboxId, vars.terminalId),
       });
+      queryClient.invalidateQueries({
+        queryKey: sandboxKeys.redisStatus(sandboxId, vars.terminalId),
+      });
+    },
+  });
+
+  const changeConnection = useMutation({
+    mutationFn: async ({
+      action,
+      terminalId,
+    }: {
+      action: "connect" | "disconnect" | "reconnect";
+      terminalId: string;
+    }) => {
+      const terminalClient =
+        rpcClient.api.sandbox[":sandboxId"].terminal[":terminalId"];
+      const args = {param: {sandboxId, terminalId}};
+
+      if (action === "connect") {
+        return await parseResponse(terminalClient.connect.$post(args));
+      }
+      if (action === "disconnect") {
+        return await parseResponse(terminalClient.disconnect.$post(args));
+      }
+      return await parseResponse(terminalClient.reconnect.$post(args));
+    },
+    onError: (err) => {
+      appToast.error(`connection error: ${getErrorMessage(err)}`);
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: sandboxKeys.snapshot(sandboxId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: sandboxKeys.redisStatus(sandboxId, vars.terminalId),
+      });
     },
   });
 
@@ -204,13 +242,75 @@ function RouteComponent() {
     },
   });
 
+  const redisStatusQuery = useQuery({
+    queryKey: sandboxKeys.redisStatus(
+      sandboxId,
+      terminal?.id ?? "pending",
+    ),
+    enabled: !!terminal,
+    queryFn: async () => {
+      if (!terminal) return null;
+      return await parseResponse(
+        rpcClient.api.sandbox[":sandboxId"].terminal[
+          ":terminalId"
+        ].redis.status.$get({
+          param: {sandboxId, terminalId: terminal.id},
+        }),
+      );
+    },
+  });
+
+  const inspectKey = useMutation({
+    mutationFn: async ({key, terminalId}: {key: string; terminalId: string}) => {
+      return await parseResponse(
+        rpcClient.api.sandbox[":sandboxId"].terminal[
+          ":terminalId"
+        ].redis.inspect.$post({
+          param: {sandboxId, terminalId},
+          json: {key},
+        }),
+      );
+    },
+    onError: (err) => {
+      appToast.error(`inspection error: ${getErrorMessage(err)}`);
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: sandboxKeys.snapshot(sandboxId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: sandboxKeys.redisStatus(sandboxId, vars.terminalId),
+      });
+    },
+  });
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {terminal ? (
         <>
           <RedisStatusBar
             terminal={terminal}
+            keyCount={redisStatusQuery.data?.keyCount}
+            supportedCommandCount={
+              redisStatusQuery.data?.supportedCommandCount
+            }
+            isConnectionPending={changeConnection.isPending}
+            onConnect={() =>
+              changeConnection.mutate({action: "connect", terminalId: terminal.id})
+            }
             onCreateTerminal={() => createTerminal.mutate()}
+            onDisconnect={() =>
+              changeConnection.mutate({
+                action: "disconnect",
+                terminalId: terminal.id,
+              })
+            }
+            onReconnect={() =>
+              changeConnection.mutate({
+                action: "reconnect",
+                terminalId: terminal.id,
+              })
+            }
           />
           <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <RedisTerminal
@@ -227,7 +327,19 @@ function RouteComponent() {
                 sendCommand.mutate({terminalId: terminal.id, command})
               }
             />
-            {!isTerminalFocused ? <RedisKeyInspector /> : null}
+            {!isTerminalFocused ? (
+              <RedisKeyInspector
+                inspection={
+                  inspectKey.variables?.terminalId === terminal.id
+                    ? inspectKey.data
+                    : undefined
+                }
+                isInspecting={inspectKey.isPending}
+                onInspect={(key) =>
+                  inspectKey.mutate({key, terminalId: terminal.id})
+                }
+              />
+            ) : null}
           </div>
         </>
       ) : (

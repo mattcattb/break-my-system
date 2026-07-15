@@ -106,6 +106,10 @@ export const sendCommandJson = z.object({
   command: z.string().trim().min(1),
 });
 
+export const inspectRedisKeyJson = z.object({
+  key: z.string().trim().min(1).max(512),
+});
+
 export const sendCommand = async (
   sandbox: Sandbox,
   terminalId: string,
@@ -118,6 +122,50 @@ export const sendCommand = async (
 export const getCommandTerminalHistory = (sandbox: Sandbox, toolId: string) => {
   const tool = getRequiredCommandTerminalTool(sandbox, toolId);
   return tool.history;
+};
+
+export const connectCommandTerminal = async (
+  sandbox: Sandbox,
+  toolId: string,
+) => {
+  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
+  await ConnectionRegistry.connect(tool.connectionId);
+  return getCommandTerminalSnapshot(tool);
+};
+
+export const disconnectCommandTerminal = async (
+  sandbox: Sandbox,
+  toolId: string,
+) => {
+  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
+  await ConnectionRegistry.disconnect(tool.connectionId);
+  return getCommandTerminalSnapshot(tool);
+};
+
+export const reconnectCommandTerminal = async (
+  sandbox: Sandbox,
+  toolId: string,
+) => {
+  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
+  await ConnectionRegistry.reconnect(tool.connectionId);
+  return getCommandTerminalSnapshot(tool);
+};
+
+export const getCommandTerminalRedisStatus = (
+  sandbox: Sandbox,
+  toolId: string,
+) => {
+  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
+  return ConnectionRegistry.getRedisStatus(tool.connectionId);
+};
+
+export const inspectCommandTerminalRedisKey = (
+  sandbox: Sandbox,
+  toolId: string,
+  key: string,
+) => {
+  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
+  return ConnectionRegistry.inspectRedisKey(tool.connectionId, key);
 };
 
 export const removeSandboxTool = async (sandbox: Sandbox, toolId: string) => {

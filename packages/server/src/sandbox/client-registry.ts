@@ -35,6 +35,44 @@ const redisReplyToLines = (reply: unknown): string[] => {
   return [String(reply)];
 };
 
+const normalizeRedisReply = (reply: unknown): unknown => {
+  if (Buffer.isBuffer(reply)) {
+    return reply.toString("utf8");
+  }
+
+  if (Array.isArray(reply)) {
+    return reply.map(normalizeRedisReply);
+  }
+
+  return reply;
+};
+
+const redisReplyToString = (reply: unknown) => {
+  const normalized = normalizeRedisReply(reply);
+  return normalized === null || normalized === undefined
+    ? null
+    : String(normalized);
+};
+
+const redisReplyToNumber = (reply: unknown) => {
+  const text = redisReplyToString(reply);
+  if (text === null) return null;
+
+  const value = Number(text);
+  return Number.isFinite(value) ? value : null;
+};
+
+const tryRedisCommand = async (
+  client: RedisClientType,
+  command: string[],
+) => {
+  try {
+    return await client.sendCommand(command);
+  } catch {
+    return null;
+  }
+};
+
 export const ConnectionRegistry = {
   createRedisConnection(sandboxId: string) {
     const connection = new RedisConnection(sandboxId);
@@ -66,6 +104,33 @@ export const ConnectionRegistry = {
     return this.require(connectionId).executeRedisCommand(command);
   },
 
+  async connect(connectionId: string) {
+    const connection = this.require(connectionId);
+    await connection.connect();
+    return connection.getStatus();
+  },
+
+  async disconnect(connectionId: string) {
+    const connection = this.require(connectionId);
+    await connection.disconnect();
+    return connection.getStatus();
+  },
+
+  async reconnect(connectionId: string) {
+    const connection = this.require(connectionId);
+    await connection.disconnect();
+    await connection.connect();
+    return connection.getStatus();
+  },
+
+  async getRedisStatus(connectionId: string) {
+    return this.require(connectionId).getRedisStatus();
+  },
+
+  async inspectRedisKey(connectionId: string, key: string) {
+    return this.require(connectionId).inspectRedisKey(key);
+  },
+
   async close(connectionId: string) {
     const connection = connections.get(connectionId);
 
@@ -89,12 +154,13 @@ class RedisConnection {
 
   private client: RedisClientType | null = null;
   private errorMessage: string | null = null;
+  private explicitlyDisconnected = false;
 
   constructor(readonly sandboxId: string) {}
 
   getStatus(): ClientStatus {
     if (this.errorMessage) return "error";
-    if (!this.client) return "idle";
+    if (!this.client) return this.explicitlyDisconnected ? "disconnected" : "idle";
     if (!this.client.isOpen) return "disconnected";
     if (this.client.isReady) return "connected";
     return "connecting";
@@ -110,8 +176,12 @@ class RedisConnection {
     }
 
     this.errorMessage = null;
+    this.explicitlyDisconnected = false;
 
     const client = createClient({url: appEnv.REDIS_URL}) as RedisClientType;
+    client.on("error", (err) => {
+      this.errorMessage = err.message;
+    });
     this.client = client;
 
     try {
@@ -133,12 +203,89 @@ class RedisConnection {
     };
   }
 
-  async close() {
-    if (!this.client) {
-      return;
+  async getRedisStatus() {
+    if (!this.client?.isReady) {
+      return {
+        pong: null,
+        keyCount: null,
+        supportedCommandCount: null,
+        status: this.getStatus(),
+      };
     }
 
-    await this.client.close();
+    const client = this.client;
+    const pong = await client.sendCommand(["PING"]);
+    const keyCount = await tryRedisCommand(client, ["DBSIZE"]);
+    const supportedCommandCount = await tryRedisCommand(client, [
+      "COMMANDCOUNT",
+    ]);
+
+    return {
+      pong: redisReplyToString(pong),
+      keyCount: redisReplyToNumber(keyCount),
+      supportedCommandCount: redisReplyToNumber(supportedCommandCount),
+      status: this.getStatus(),
+    };
+  }
+
+  async inspectRedisKey(key: string) {
+    const client = await this.connect();
+    const exists = redisReplyToNumber(
+      await client.sendCommand(["EXISTS", key]),
+    );
+
+    if (!exists) {
+      return {
+        key,
+        exists: false,
+        type: "none",
+        ttlSeconds: -2,
+        encoding: null,
+        value: null,
+        size: null,
+      };
+    }
+
+    const type = redisReplyToString(await client.sendCommand(["TYPE", key]));
+    const ttlSeconds = redisReplyToNumber(
+      await tryRedisCommand(client, ["TTL", key]),
+    );
+    const encoding = redisReplyToString(
+      await tryRedisCommand(client, ["OBJECTENCODING", key]),
+    );
+    let value: unknown = null;
+    let size: number | null = null;
+
+    if (type === "string") {
+      value = normalizeRedisReply(await client.sendCommand(["GET", key]));
+    } else if (type === "hash") {
+      value = normalizeRedisReply(await client.sendCommand(["HGETALL", key]));
+    } else if (type === "set") {
+      size = redisReplyToNumber(await client.sendCommand(["SCARD", key]));
+    }
+
+    return {
+      key,
+      exists: true,
+      type: type ?? "unknown",
+      ttlSeconds,
+      encoding,
+      value,
+      size,
+    };
+  }
+
+  async disconnect() {
+    if (this.client?.isOpen) {
+      await this.client.close();
+    }
+
     this.client = null;
+    this.errorMessage = null;
+    this.explicitlyDisconnected = true;
+  }
+
+  async close() {
+    await this.disconnect();
   }
 }

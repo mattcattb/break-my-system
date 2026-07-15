@@ -1,14 +1,26 @@
 import type {Terminal} from "@break-my-system/server";
-import {Database, Plus, RotateCcw} from "lucide-react";
+import {Database, Plus, Plug, PlugZap, RotateCcw} from "lucide-react";
 import {Button} from "../../components/ui/button";
 import {cn} from "../../lib/cn";
 
 export function RedisStatusBar({
   terminal,
+  keyCount,
+  supportedCommandCount,
+  isConnectionPending,
+  onConnect,
   onCreateTerminal,
+  onDisconnect,
+  onReconnect,
 }: {
   terminal: Terminal;
+  keyCount?: number | null;
+  supportedCommandCount?: number | null;
+  isConnectionPending: boolean;
+  onConnect: () => void;
   onCreateTerminal: () => void;
+  onDisconnect: () => void;
+  onReconnect: () => void;
 }) {
   const isConnected = terminal.status === "connected";
 
@@ -32,12 +44,39 @@ export function RedisStatusBar({
             </span>
           </div>
           <p className="truncate font-mono text-xs text-muted-foreground">
-            terminal {terminal.id} · {terminal.commandCount} commands
+            {keyCount ?? "—"} keys · {supportedCommandCount ?? "—"} supported
+            commands · {terminal.commandCount} run
           </p>
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" disabled title="Backend action coming next">
+        {isConnected ? (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isConnectionPending}
+            onClick={onDisconnect}
+          >
+            <PlugZap className="size-3.5" />
+            disconnect
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isConnectionPending}
+            onClick={onConnect}
+          >
+            <Plug className="size-3.5" />
+            connect
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={isConnectionPending}
+          onClick={onReconnect}
+        >
           <RotateCcw className="size-3.5" />
           reconnect
         </Button>
