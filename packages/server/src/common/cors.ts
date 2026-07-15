@@ -22,8 +22,7 @@ export const corsMiddleware = cors({
       return null;
     }
 
-    return allowedOrigins.length === 0 ||
-      allowedOrigins.includes(origin) ||
+    return allowedOrigins.includes(origin) ||
       (appEnv.NODE_ENV !== "production" && isLocalhostOrigin(origin))
       ? origin
       : null;

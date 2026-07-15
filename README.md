@@ -61,6 +61,23 @@ Default URLs:
 
 If local Postgres or Redis ports are already taken, change `POSTGRES_PORT`, `REDIS_PORT`, `DATABASE_URL`, and `REDIS_URL` in `.env`.
 
+The web app calls relative `/api` and `/ws` URLs. Vite forwards those requests to
+`API_PROXY_TARGET` (default: `http://localhost:3000`), so local development does
+not need CORS configuration.
+
+## Railway
+
+Deploy the web and server as separate services. The web start command serves the
+production build and can proxy `/api` and `/ws` to the server over Railway's
+private network; set its `API_PROXY_TARGET` to the server's private URL. Leave
+`VITE_API_URL` and `VITE_WS_URL` unset when using that proxy. If the browser must
+call the API's public domain directly instead, set both variables at web build
+time and set the server's `CORS_ORIGINS` to the web's public origin.
+
+The Redis image listens on port `6479`, so the server needs a `REDIS_URL` using
+the Redis service's private domain and that port. The Redis image must include a
+`linux/amd64` manifest for Railway.
+
 `bun run dev` also runs `infra:up`, so once dependencies are installed and the
 database has been migrated, one command starts Docker, the API, and the web app.
 
