@@ -7,11 +7,12 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import {DetailedError, parseResponse} from "hono/client";
-import type {Terminal} from "@break-my-system/server";
-import {TerminalPanel} from "../../components/Terminal";
+import {RedisKeyInspector} from "../../features/redis/RedisKeyInspector";
+import {RedisStatusBar} from "../../features/redis/RedisStatusBar";
+import {RedisTerminal} from "../../features/redis/RedisTerminal";
 import {rpcClient} from "../../lib/rpc.client";
 import {appToast} from "../../lib/toast";
-import {useEffect, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
 
 const sandboxKeys = {
   snapshot: (sandboxId: string) => ["sandbox", sandboxId] as const,
@@ -77,7 +78,11 @@ function RouteComponent() {
   const {sandboxId} = Route.useRouteContext();
   const queryClient = useQueryClient();
   const {data: sandbox} = useSuspenseQuery(sandboxQueryOptions(sandboxId));
-  const terminal = sandbox.tools[0];
+  const [selectedTerminalId, setSelectedTerminalId] = useState<string>();
+  const [isTerminalFocused, setIsTerminalFocused] = useState(false);
+  const terminal =
+    sandbox.tools.find((tool) => tool.id === selectedTerminalId) ??
+    sandbox.tools[0];
   const requestedTerminal = useRef(false);
 
   const createTerminal = useMutation({
@@ -91,7 +96,31 @@ function RouteComponent() {
     onError: (err) => {
       appToast.error(`error creating terminal: ${getErrorMessage(err)}`);
     },
-    onSuccess: () => {
+    onSuccess: (createdTerminal) => {
+      setSelectedTerminalId(createdTerminal.id);
+      queryClient.invalidateQueries({
+        queryKey: sandboxKeys.snapshot(sandboxId),
+      });
+    },
+  });
+
+  const closeTerminal = useMutation({
+    mutationFn: async (terminalId: string) => {
+      return await parseResponse(
+        rpcClient.api.sandbox[":sandboxId"].terminal[":terminalId"].$delete({
+          param: {sandboxId, terminalId},
+        }),
+      );
+    },
+    onError: (err) => {
+      appToast.error(`error closing terminal: ${getErrorMessage(err)}`);
+    },
+    onSuccess: (_result, closedTerminalId) => {
+      if (closedTerminalId === terminal?.id) {
+        setSelectedTerminalId(
+          sandbox.tools.find((tool) => tool.id !== closedTerminalId)?.id,
+        );
+      }
       queryClient.invalidateQueries({
         queryKey: sandboxKeys.snapshot(sandboxId),
       });
@@ -143,40 +172,28 @@ function RouteComponent() {
     }
   }, [createTerminal, terminal]);
 
-  return (
-    <div className="min-h-screen bg-black font-mono text-sm text-green-300">
-      {terminal ? (
-        <SandboxTerminal
-          terminal={terminal}
-          sandboxId={sandboxId}
-          isSending={sendCommand.isPending}
-          onSendCommand={(command) =>
-            sendCommand.mutate({terminalId: terminal.id, command})
-          }
-        />
-      ) : (
-        <pre className="p-4 text-green-700">
-          {createTerminal.isPending ? "starting terminal" : "terminal pending"}
-        </pre>
-      )}
-    </div>
-  );
-}
+  useEffect(() => {
+    if (!selectedTerminalId && terminal) {
+      setSelectedTerminalId(terminal.id);
+    }
+  }, [selectedTerminalId, terminal]);
 
-function SandboxTerminal({
-  terminal,
-  sandboxId,
-  isSending,
-  onSendCommand,
-}: {
-  terminal: Terminal;
-  sandboxId: string;
-  isSending: boolean;
-  onSendCommand: (command: string) => void;
-}) {
+  useEffect(() => {
+    if (!isTerminalFocused) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsTerminalFocused(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isTerminalFocused]);
+
   const historyQuery = useQuery({
-    queryKey: sandboxKeys.history(sandboxId, terminal.id),
+    queryKey: sandboxKeys.history(sandboxId, terminal?.id ?? "pending"),
+    enabled: !!terminal,
     queryFn: async () => {
+      if (!terminal) return [];
       return await parseResponse(
         rpcClient.api.sandbox[":sandboxId"].terminal[
           ":terminalId"
@@ -186,21 +203,38 @@ function SandboxTerminal({
       );
     },
   });
-  const outputLines =
-    historyQuery.data?.flatMap((entry) => [
-      `$ ${entry.input.command.join(" ")}`,
-      ...(entry.errorMessage
-        ? [`error: ${entry.errorMessage}`]
-        : entry.outputLines),
-    ]) ?? [];
 
   return (
-    <TerminalPanel
-      terminal={terminal}
-      sandboxId={sandboxId}
-      outputLines={outputLines}
-      isSending={isSending}
-      onSendCommand={onSendCommand}
-    />
+    <div className="flex min-h-screen flex-col bg-background">
+      {terminal ? (
+        <>
+          <RedisStatusBar
+            terminal={terminal}
+            onCreateTerminal={() => createTerminal.mutate()}
+          />
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            <RedisTerminal
+              terminal={terminal}
+              terminals={sandbox.tools}
+              history={historyQuery.data ?? []}
+              isFocused={isTerminalFocused}
+              isSending={sendCommand.isPending}
+              onClose={(terminalId) => closeTerminal.mutate(terminalId)}
+              onCreate={() => createTerminal.mutate()}
+              onFocusChange={setIsTerminalFocused}
+              onSelect={setSelectedTerminalId}
+              onSendCommand={(command) =>
+                sendCommand.mutate({terminalId: terminal.id, command})
+              }
+            />
+            {!isTerminalFocused ? <RedisKeyInspector /> : null}
+          </div>
+        </>
+      ) : (
+        <pre className="min-h-screen bg-black p-4 font-mono text-green-700">
+          {createTerminal.isPending ? "starting terminal" : "terminal pending"}
+        </pre>
+      )}
+    </div>
   );
 }
