@@ -9,89 +9,58 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RedisIndexRouteImport } from './routes/redis/index'
+import { Route as RedisSandboxIdRouteImport } from './routes/redis/sandbox.$id'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RedisIndexRoute = RedisIndexRouteImport.update({
+  id: '/redis/',
+  path: '/redis/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedisSandboxIdRoute = RedisSandboxIdRouteImport.update({
+  id: '/redis/sandbox/$id',
+  path: '/redis/sandbox/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/redis/': typeof RedisIndexRoute
+  '/redis/sandbox/$id': typeof RedisSandboxIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/redis': typeof RedisIndexRoute
+  '/redis/sandbox/$id': typeof RedisSandboxIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/login': typeof LoginRoute
-  '/signup': typeof SignupRoute
+  '/redis/': typeof RedisIndexRoute
+  '/redis/sandbox/$id': typeof RedisSandboxIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/signup'
+  fullPaths: '/' | '/redis/' | '/redis/sandbox/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/signup'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/signup'
+  to: '/' | '/redis' | '/redis/sandbox/$id'
+  id: '__root__' | '/' | '/redis/' | '/redis/sandbox/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
-  LoginRoute: typeof LoginRoute
-  SignupRoute: typeof SignupRoute
+  RedisIndexRoute: typeof RedisIndexRoute
+  RedisSandboxIdRoute: typeof RedisSandboxIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -99,14 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/redis/': {
+      id: '/redis/'
+      path: '/redis'
+      fullPath: '/redis/'
+      preLoaderRoute: typeof RedisIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redis/sandbox/$id': {
+      id: '/redis/sandbox/$id'
+      path: '/redis/sandbox/$id'
+      fullPath: '/redis/sandbox/$id'
+      preLoaderRoute: typeof RedisSandboxIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
-  LoginRoute: LoginRoute,
-  SignupRoute: SignupRoute,
+  RedisIndexRoute: RedisIndexRoute,
+  RedisSandboxIdRoute: RedisSandboxIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

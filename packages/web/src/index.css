@@ -22,43 +22,42 @@
   --color-warning: hsl(var(--warning));
   --color-danger: hsl(var(--danger));
 
-  --font-display: "Sora", "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-body: Arial, ui-sans-serif, system-ui, sans-serif;
 
-  --shadow-glow: 0 0 0 1px hsl(var(--ring) / 0.25),
-    0 12px 28px hsl(var(--ring) / 0.18);
+  --shadow-glow: none;
 }
 
 @layer base {
   :root {
     color-scheme: light;
-    --background: 44 28% 95%;
-    --foreground: 210 22% 15%;
+    --background: 0 0% 86%;
+    --foreground: 0 0% 8%;
 
-    --surface: 0 0% 100% / 0.76;
-    --surface-elevated: 0 0% 100% / 0.94;
-    --muted: 210 26% 91%;
-    --muted-foreground: 215 14% 44%;
+    --surface: 0 0% 94%;
+    --surface-elevated: 0 0% 90%;
+    --muted: 0 0% 82%;
+    --muted-foreground: 0 0% 28%;
 
-    --border: 212 20% 80%;
-    --ring: 171 70% 34%;
-    --primary: 171 70% 34%;
+    --border: 0 0% 45%;
+    --ring: 214 70% 35%;
+    --primary: 214 70% 35%;
     --primary-foreground: 0 0% 100%;
-    --accent: 34 92% 54%;
-    --success: 151 45% 37%;
-    --warning: 34 92% 54%;
-    --danger: 2 66% 54%;
+    --accent: 48 100% 40%;
+    --success: 120 45% 30%;
+    --warning: 39 100% 35%;
+    --danger: 0 70% 38%;
 
-    --radius: 0.9rem;
+    --radius: 0.125rem;
 
-    --card: 0 0% 100%;
-    --card-foreground: 210 22% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 210 22% 15%;
-    --secondary: 210 26% 92%;
-    --secondary-foreground: 210 22% 15%;
-    --destructive: 2 66% 54%;
-    --input: 212 20% 80%;
+    --card: 0 0% 94%;
+    --card-foreground: 0 0% 8%;
+    --popover: 0 0% 94%;
+    --popover-foreground: 0 0% 8%;
+    --secondary: 0 0% 84%;
+    --secondary-foreground: 0 0% 8%;
+    --destructive: 0 70% 38%;
+    --input: 0 0% 45%;
 
     --chart-1: 171 70% 34%;
     --chart-2: 34 92% 54%;
@@ -120,18 +119,6 @@
 
   body {
     @apply bg-background text-foreground font-body antialiased;
-    background-image:
-      radial-gradient(
-        1200px 560px at -20% -12%,
-        hsl(171 70% 34% / 0.18),
-        transparent 58%
-      ),
-      radial-gradient(
-        1000px 480px at 110% -20%,
-        hsl(34 92% 54% / 0.16),
-        transparent 55%
-      ),
-      linear-gradient(180deg, hsl(42 36% 98%), hsl(38 28% 92%));
     min-height: 100vh;
   }
 

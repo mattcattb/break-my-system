@@ -4,21 +4,30 @@ import {ZodError} from "zod";
 import type {PostgresError} from "postgres";
 import {logger} from "./logger";
 import type {ContentfulStatusCode} from "hono/utils/http-status";
+import {APP_ERROR_CODES, ERROR_MESSAGES} from "./consts";
+import type {AppErrorCode, AppErrorPayload, ErrorCode} from "./types";
 
-export const ERROR_MESSAGES = {
-  BAD_REQUEST: "Bad request",
-  UNAUTHORIZED: "Unauthorized",
-  FORBIDDEN: "Forbidden",
-  NOT_FOUND: "Not found",
-  VALIDATION_ERROR: "Validation failed",
-  SERVICE_ERROR: "Service error",
-  INTERNAL_ERROR: "Internal server error",
-  CONFLICT_ERROR: "Server conflict error",
-} as const;
+type AppHttpErrorInput = {
+  message?: string;
+  details?: unknown;
+  appCode?: AppErrorCode;
+};
 
-export const ERROR_CODES = {} as const;
+const resolveErrorInput = (
+  messageOrInput?: string | AppHttpErrorInput,
+  details?: unknown,
+  appCode?: AppErrorCode,
+): AppHttpErrorInput => {
+  if (typeof messageOrInput === "object" && messageOrInput !== null) {
+    return messageOrInput;
+  }
 
-export type ErrorCode = keyof typeof ERROR_MESSAGES;
+  return {
+    message: messageOrInput,
+    details,
+    appCode,
+  };
+};
 
 const STATUS_TO_CODE: Record<number, ErrorCode> = {
   400: "BAD_REQUEST",
@@ -33,59 +42,95 @@ const STATUS_TO_CODE: Record<number, ErrorCode> = {
 export class AppHttpError extends HTTPException {
   public readonly code: ErrorCode;
   public readonly details?: unknown;
+  public readonly appCode?: AppErrorCode;
 
   constructor(
     status: ContentfulStatusCode,
     code: ErrorCode,
-    message?: string,
+    input?: string | AppHttpErrorInput,
     details?: unknown,
+    appCode?: AppErrorCode,
   ) {
-    super(status, {message: message ?? ERROR_MESSAGES[code]});
+    const resolved = resolveErrorInput(input, details, appCode);
+    super(status, {
+      message:
+        resolved.message ??
+        (resolved.appCode ? APP_ERROR_CODES[resolved.appCode] : undefined) ??
+        ERROR_MESSAGES[code],
+    });
     this.code = code;
-    this.details = details;
+    this.details = resolved.details;
+    this.appCode = resolved.appCode;
   }
 }
 
 export class BadRequestException extends AppHttpError {
-  constructor(message?: string, details?: unknown) {
-    super(400, "BAD_REQUEST", message, details);
+  constructor(
+    messageOrInput?: string | AppHttpErrorInput,
+    details?: unknown,
+    appCode?: AppErrorCode,
+  ) {
+    super(400, "BAD_REQUEST", messageOrInput, details, appCode);
   }
 }
 
 export class ConflictException extends AppHttpError {
-  constructor(message?: string, details?: unknown) {
-    super(409, "CONFLICT_ERROR", message, details);
+  constructor(
+    messageOrInput?: string | AppHttpErrorInput,
+    details?: unknown,
+    appCode?: AppErrorCode,
+  ) {
+    super(409, "CONFLICT_ERROR", messageOrInput, details, appCode);
   }
 }
 
 export class UnauthorizedException extends AppHttpError {
-  constructor(message?: string, details?: unknown) {
-    super(401, "UNAUTHORIZED", message, details);
+  constructor(
+    messageOrInput?: string | AppHttpErrorInput,
+    details?: unknown,
+    appCode?: AppErrorCode,
+  ) {
+    super(401, "UNAUTHORIZED", messageOrInput, details, appCode);
   }
 }
 
 export class ForbiddenException extends AppHttpError {
-  constructor(message?: string, details?: unknown) {
-    super(403, "FORBIDDEN", message, details);
+  constructor(
+    messageOrInput?: string | AppHttpErrorInput,
+    details?: unknown,
+    appCode?: AppErrorCode,
+  ) {
+    super(403, "FORBIDDEN", messageOrInput, details, appCode);
   }
 }
 
-// Requested default 400 for NotFoundException (override if needed)
 export class NotFoundException extends AppHttpError {
-  constructor(message?: string, details?: unknown) {
-    super(404, "NOT_FOUND", message, details);
+  constructor(
+    messageOrInput?: string | AppHttpErrorInput,
+    appCode?: AppErrorCode,
+    details?: unknown,
+  ) {
+    super(404, "NOT_FOUND", messageOrInput, details, appCode);
   }
 }
 
 export class ValidationException extends AppHttpError {
-  constructor(message?: string, details?: unknown) {
-    super(422, "VALIDATION_ERROR", message, details);
+  constructor(
+    messageOrInput?: string | AppHttpErrorInput,
+    details?: unknown,
+    appCode?: AppErrorCode,
+  ) {
+    super(422, "VALIDATION_ERROR", messageOrInput, details, appCode);
   }
 }
 
 export class ServiceException extends AppHttpError {
-  constructor(message?: string, details?: unknown) {
-    super(500, "SERVICE_ERROR", message, details);
+  constructor(
+    messageOrInput?: string | AppHttpErrorInput,
+    details?: unknown,
+    appCode?: AppErrorCode,
+  ) {
+    super(500, "SERVICE_ERROR", messageOrInput, details, appCode);
   }
 }
 
@@ -95,12 +140,13 @@ const isPostgresError = (err: unknown): err is PostgresError =>
   ("code" in err || "severity" in err) &&
   (err as {name?: string}).name === "PostgresError";
 
-const formatErrorResponse = (err: HTTPException) => {
+const formatErrorResponse = (err: HTTPException): AppErrorPayload => {
   if (err instanceof AppHttpError) {
     return {
       code: err.code,
       message: err.message || ERROR_MESSAGES[err.code],
       details: err.details,
+      appCode: err.appCode,
     };
   }
 

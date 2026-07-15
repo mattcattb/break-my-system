@@ -47,7 +47,7 @@ export const systemsController = createRouter()
     const system = findSystem(c.req.param("id"));
 
     if (!system) {
-      throw new BadRequestException("Unknown system");
+      throw new BadRequestException({appCode: "UNKNOWN_SYSTEM"});
     }
 
     const {command} = c.req.valid("json");
@@ -67,7 +67,7 @@ export const systemsController = createRouter()
     const system = findSystem(c.req.param("id"));
 
     if (!system) {
-      throw new BadRequestException("Unknown system");
+      throw new BadRequestException({appCode: "UNKNOWN_SYSTEM"});
     }
 
     return c.json({

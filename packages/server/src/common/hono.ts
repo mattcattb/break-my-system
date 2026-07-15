@@ -1,4 +1,4 @@
-import {Hono} from "hono";
+import {Hono, type Env} from "hono";
 import {corsMiddleware} from "./cors";
 import {getPinoLogger} from "./logger";
 
@@ -18,8 +18,8 @@ declare module "hono" {
   }
 }
 
-export const createRouter = () => {
-  return new Hono({
+export const createRouter = <TEnv extends Env = Env>() => {
+  return new Hono<TEnv>({
     strict: true,
   });
 };

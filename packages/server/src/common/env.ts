@@ -1,44 +1,22 @@
 import {z} from "zod";
 
-const DEFAULT_REDIS_URL = "redis://localhost:6379";
-
-const betterAuthSchema = z.object({
-  BETTER_AUTH_SECRET: z.string(),
-  BETTER_AUTH_URL: z.string(),
-});
-
-const googleEnvSchema = z.object({
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GOOGLE_API_KEY: z.string().optional(),
-});
-
-const githubEnvSchema = z.object({
-  GITHUB_CLIENT_ID: z.string().optional(),
-  GITHUB_CLIENT_SECRET: z.string().optional(),
-});
-
-const redisThingEnvSchema = z.object({
-  redisThingUrl: z.string().min(1),
-});
+const DEFAULT_REDIS_URL = "redis://localhost:26379";
 
 const appEnvSchema = z.object({
-  ...betterAuthSchema.shape,
-  ...googleEnvSchema.shape,
-  ...githubEnvSchema.shape,
-  DATABASE_URL: z.string(),
-  REDIS_URL: z.preprocess((value) => {
-    if (typeof value === "string" && value.trim() !== "") {
-      return value;
-    }
-    return DEFAULT_REDIS_URL;
-  }, z.string().url()),
+  DATABASE_URL: z.string().optional(),
+  REDIS_URL: z
+    .preprocess((value) => {
+      if (typeof value === "string" && value.trim() !== "") {
+        return value;
+      }
+      return DEFAULT_REDIS_URL;
+    }, z.string().url())
+    .optional(),
 
   LOG_LEVEL: z.string().optional(),
   CORS_ORIGINS: z.string().optional(),
 
   NODE_ENV: z.string().optional(),
-  ...redisThingEnvSchema.shape,
 
   PORT: z.preprocess((value) => {
     if (typeof value === "string" && value.trim() !== "") {

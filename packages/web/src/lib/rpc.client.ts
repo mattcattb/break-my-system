@@ -1,9 +1,9 @@
 import {hc} from "hono/client";
-import type {AppType} from "@break-my-system/server/rpc";
+import type {AppType} from "@break-my-system/server";
 
 const rawBaseUrl = import.meta.env.VITE_API_URL?.trim() ?? "";
 
-export const API_BASE_URL =
+const API_BASE_URL =
   rawBaseUrl && !rawBaseUrl.startsWith("http")
     ? `http://${rawBaseUrl}`
     : rawBaseUrl;

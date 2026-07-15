@@ -1,11 +1,11 @@
-import { cors } from "hono/cors";
+import {cors} from "hono/cors";
 
 import {appEnv} from "./env";
 
-const allowedOrigins = (appEnv.CORS_ORIGINS || appEnv.BETTER_AUTH_URL)
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const allowedOrigins =
+  appEnv.CORS_ORIGINS?.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean) ?? [];
 
 const isLocalhostOrigin = (origin: string) => {
   try {
@@ -29,7 +29,13 @@ export const corsMiddleware = cors({
       : null;
   },
   credentials: true,
-  allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],  allowHeaders: ["Content-Type", "Authorization"],
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+  allowHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Sandbox-Id",
+    "X-SandboxId",
+  ],
   exposeHeaders: ["Content-Length"],
   maxAge: 86400, // 24 hours
 });

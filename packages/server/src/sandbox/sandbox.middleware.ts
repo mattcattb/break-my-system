@@ -5,32 +5,48 @@ import {
   getSandbox,
   hasDurationExceeded,
   hasTtlExpired,
-  type Sandbox,
 } from "./sandbox.runtime";
+import type {Sandbox} from "./sandbox";
 
-export const requireSandboxMW = createMiddleware<{
-  Variables: {sandboxId: string; sandbox: Sandbox};
-}>(async (c, next) => {
-  const headers = c.req.header();
-  const sandboxId = headers["X-Sandbox-Id"];
+export type SandboxVariables = {
+  sandbox: Sandbox;
+  sandboxId: string;
+};
 
-  if (sandboxId.length == 0) {
-    throw new NotFoundException("X-Sandbox-Id header not found");
-  }
+export type SandboxEnv = {
+  Variables: SandboxVariables;
+};
 
-  // here we use the bearer auth token as the sandboxId here, throwing if doenst exist or getting it from the map
-  const sandbox = getSandbox(sandboxId);
+export const requireSandboxMW = createMiddleware<SandboxEnv>(
+  async (c, next) => {
+    const sandboxId = c.req.param("sandboxId");
+    if (!sandboxId) {
+      throw new NotFoundException({
+        appCode: "SANDBOX_NOT_FOUND",
+        message: "Sandbox missing sandboxId parameter",
+      });
+    }
 
-  if (!sandbox) {
-    throw new NotFoundException("Sandbox does not exist");
-  }
+    const sandbox = getSandbox(sandboxId);
 
-  if (hasTtlExpired(sandbox) || hasDurationExceeded(sandbox)) {
-    await closeSandbox(sandbox);
-    throw new NotFoundException(`Sandbox ${sandboxId} has expired`);
-  }
+    if (!sandbox) {
+      throw new NotFoundException({
+        appCode: "SANDBOX_NOT_FOUND",
+        details: {sandboxId},
+      });
+    }
 
-  c.set("sandboxId", sandbox.id);
-  c.set("sandbox", sandbox);
-  next();
-});
+    if (hasTtlExpired(sandbox) || hasDurationExceeded(sandbox)) {
+      await closeSandbox(sandbox);
+      throw new NotFoundException({
+        appCode: "SANDBOX_EXPIRED",
+        details: {sandboxId},
+      });
+    }
+
+    sandbox.touch();
+    c.set("sandboxId", sandbox.id);
+    c.set("sandbox", sandbox);
+    await next();
+  },
+);

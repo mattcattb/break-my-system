@@ -4,17 +4,17 @@ import { cn } from "../../lib/cn";
 
 const inputStyles = cva(
   [
-    "flex w-full rounded-md border border-border bg-surface/60 px-3 py-2 text-sm text-foreground",
+    "flex w-full rounded-sm border border-border bg-white px-2 py-1 text-sm text-foreground",
     "placeholder:text-muted-foreground",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
     "disabled:cursor-not-allowed disabled:opacity-60",
   ],
   {
     variants: {
       size: {
-        sm: "h-9",
-        md: "h-11",
-        lg: "h-12 text-base",
+        sm: "h-7",
+        md: "h-8",
+        lg: "h-9 text-sm",
       },
     },
     defaultVariants: {

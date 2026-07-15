@@ -47,7 +47,7 @@ server
 ```bash
 cp .env.example .env
 bun install
-docker compose up -d
+bun run infra:up
 bun run db:migrate
 bun run dev
 ```
@@ -60,6 +60,9 @@ Default URLs:
 - Systems: `http://localhost:3000/api/systems`
 
 If local Postgres or Redis ports are already taken, change `POSTGRES_PORT`, `REDIS_PORT`, `DATABASE_URL`, and `REDIS_URL` in `.env`.
+
+`bun run dev` also runs `infra:up`, so once dependencies are installed and the
+database has been migrated, one command starts Docker, the API, and the web app.
 
 ## Where To Work First
 
