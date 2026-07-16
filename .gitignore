@@ -5,6 +5,7 @@ node_modules/
 dist/
 .output/
 .vite/
+packages/server/native/wad/wadctl
 
 # Environment
 .env

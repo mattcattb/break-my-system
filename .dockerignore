@@ -1,0 +1,7 @@
+.git
+.env*
+node_modules
+**/node_modules
+dist
+**/dist
+packages/server/native/wad/wadctl
