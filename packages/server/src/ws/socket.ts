@@ -23,18 +23,12 @@ export function sendMessage(socket: WSContext, message: ServerMessage) {
 
 export function requireSocketContext(socket: AppWebSocket) {
   const socketData = socket.raw;
-  if (!socketData || !socketData.data) {
-    throw new Error("Socket data not attached");
+  if (!socketData) {
+    throw new Error("Raw socket not available");
   }
 
   return socketData;
 }
-
-export function setSocketContext(socket: WSContext, data: AppWebSocket) {
-  socket.raw = data;
-}
-
-export function subscribe(socket: AppWebSocket, channel: string) {}
 
 export const TOPICS = {
   tool: (toolId: string) => `tool:${toolId}`,

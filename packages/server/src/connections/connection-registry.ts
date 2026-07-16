@@ -4,7 +4,10 @@ import {
   type RedisConnection,
 } from "../systems/redis/redis.connection";
 
-const connections = new Map<string, RedisConnection>();
+type Connection = RedisConnection;
+type ConnectionKind = Connection["kind"];
+
+const connections = new Map<string, Connection>();
 
 export const ConnectionRegistry = {
   createRedisConnection(sandboxId: string) {
@@ -17,20 +20,26 @@ export const ConnectionRegistry = {
     return connections.get(connectionId) ?? null;
   },
 
-  requireRedis(connectionId: string, sandboxId?: string) {
+  require<K extends ConnectionKind>(
+    connectionId: string,
+    sandboxId: string,
+    expectedKind: K,
+  ): Extract<Connection, {kind: K}> {
     const connection = connections.get(connectionId);
 
     if (
       !connection ||
-      connection.kind !== "redis" ||
-      (sandboxId && connection.sandboxId !== sandboxId)
+      connection.kind !== expectedKind ||
+      connection.sandboxId !== sandboxId
     ) {
-      throw new NotFoundException("Connection not found", "UNKNOWN_SYSTEM", {
-        connectionId,
+      throw new NotFoundException({
+        appCode: "UNKNOWN_SYSTEM",
+        message: "Connection not found",
+        details: {connectionId, expectedKind},
       });
     }
 
-    return connection;
+    return connection as Extract<Connection, {kind: K}>;
   },
 
   getStatus(connectionId: string) {
@@ -51,6 +60,14 @@ export const ConnectionRegistry = {
   async closeMany(connectionIds: string[]) {
     await Promise.allSettled(
       connectionIds.map((connectionId) => this.close(connectionId)),
+    );
+  },
+
+  async closeForSandbox(sandboxId: string) {
+    await this.closeMany(
+      [...connections.values()]
+        .filter((connection) => connection.sandboxId === sandboxId)
+        .map((connection) => connection.id),
     );
   },
 };

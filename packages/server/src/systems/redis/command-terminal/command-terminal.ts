@@ -1,10 +1,7 @@
 import {z} from "zod";
-import {NotFoundException} from "../../../common/errors";
 import type {ClientStatus} from "../../../common/types";
 import {ConnectionRegistry} from "../../../connections/connection-registry";
-import type {Sandbox} from "../../../sandbox/sandbox";
-import type {TerminalEvent} from "../../../ws/ws.messages";
-type TerminalEventListener = (event: TerminalEvent) => void;
+import {requireTool, type Sandbox} from "../../../sandbox/sandbox";
 
 const redisReplyToLines = (reply: unknown): string[] => {
   if (reply === null) return ["(nil)"];
@@ -21,22 +18,6 @@ const redisReplyToLines = (reply: unknown): string[] => {
   if (Buffer.isBuffer(reply)) return [reply.toString("utf8")];
   if (typeof reply === "object") return [JSON.stringify(reply, null, 2)];
   return [String(reply)];
-};
-
-const listeners = new Set<TerminalEventListener>();
-
-export const TerminalEmitter = {
-  emit(event: TerminalEvent) {
-    for (const listener of listeners) {
-      listener(event);
-    }
-  },
-
-  subscribe(listener: TerminalEventListener) {
-    listeners.add(listener);
-
-    return () => listeners.delete(listener);
-  },
 };
 
 export type CommandTerminalTool = {
@@ -76,7 +57,7 @@ export type CommandExecution = {
 
 export const getCommandTerminalSnapshot = (
   tool: CommandTerminalTool,
-  status = ConnectionRegistry.getStatus(tool.connectionId),
+  status: ClientStatus,
 ): CommandTerminalToolSnapshot => ({
   commandCount: tool.history.length,
   connectionId: tool.connectionId,
@@ -100,38 +81,23 @@ const createCommandTerminalTool = (
   history: [],
 });
 
-const requireCommandTerminal = (
-  sandbox: Sandbox,
-  terminalId: string,
-): CommandTerminalTool => {
-  const tool = sandbox.getTool(terminalId);
-
-  if (!tool || tool.kind !== "command-terminal") {
-    throw new NotFoundException({
-      appCode: "TERMINAL_NOT_FOUND",
-      details: {toolId: terminalId},
-    });
-  }
-
-  return tool;
-};
-
 export const createCommandTerminal = (
   sandbox: Sandbox,
 ): CommandTerminalToolSnapshot => {
   const connection = ConnectionRegistry.createRedisConnection(sandbox.id);
   const tool = createCommandTerminalTool(connection.id);
 
-  sandbox.addConnection(connection.id);
   sandbox.addTool(tool);
 
-  return getCommandTerminalSnapshot(tool);
+  return getCommandTerminalSnapshot(tool, connection.getStatus());
 };
 
 export const executeCommandTerminal = async (
-  tool: CommandTerminalTool,
+  sandbox: Sandbox,
+  terminalId: string,
   input: string,
 ) => {
+  const tool = requireTool(sandbox, terminalId, "command-terminal");
   const command = input.trim().split(/\s+/);
   const execution: CommandExecution = {
     id: crypto.randomUUID(),
@@ -148,7 +114,11 @@ export const executeCommandTerminal = async (
   tool.history.push(execution);
 
   try {
-    const connection = ConnectionRegistry.requireRedis(tool.connectionId);
+    const connection = ConnectionRegistry.require(
+      tool.connectionId,
+      sandbox.id,
+      "redis",
+    );
     const redis = await connection.connect();
     const reply = await redis.sendCommand(command);
 
@@ -170,92 +140,4 @@ export const executeCommandTerminal = async (
 export const getCommandTerminalHistory = (
   sandbox: Sandbox,
   terminalId: string,
-) => requireCommandTerminal(sandbox, terminalId).history;
-
-export const connectCommandTerminal = async (
-  sandbox: Sandbox,
-  terminalId: string,
-) => {
-  const tool = requireCommandTerminal(sandbox, terminalId);
-  const connection = ConnectionRegistry.requireRedis(
-    tool.connectionId,
-    sandbox.id,
-  );
-  await connection.connect();
-  return getCommandTerminalSnapshot(tool);
-};
-
-export const disconnectCommandTerminal = async (
-  sandbox: Sandbox,
-  terminalId: string,
-) => {
-  const tool = requireCommandTerminal(sandbox, terminalId);
-  const connection = ConnectionRegistry.requireRedis(
-    tool.connectionId,
-    sandbox.id,
-  );
-  await connection.disconnect();
-  return getCommandTerminalSnapshot(tool);
-};
-
-export const reconnectCommandTerminal = async (
-  sandbox: Sandbox,
-  terminalId: string,
-) => {
-  const tool = requireCommandTerminal(sandbox, terminalId);
-  const connection = ConnectionRegistry.requireRedis(
-    tool.connectionId,
-    sandbox.id,
-  );
-  await connection.disconnect();
-  await connection.connect();
-  return getCommandTerminalSnapshot(tool);
-};
-
-export const getCommandTerminalRedisStatus = async (
-  sandbox: Sandbox,
-  terminalId: string,
-) => {
-  const tool = requireCommandTerminal(sandbox, terminalId);
-  const connection = ConnectionRegistry.requireRedis(
-    tool.connectionId,
-    sandbox.id,
-  );
-
-  if (connection.getStatus() !== "connected") {
-    return {
-      pong: null,
-      keyCount: null,
-      supportedCommandCount: null,
-      status: connection.getStatus(),
-    };
-  }
-
-  const redis = await connection.connect();
-  const [pong, keyCount, supportedCommandCount] = await Promise.all([
-    redis.ping(),
-    redis.dbSize(),
-    redis.sendCommand(["COMMAND", "COUNT"]),
-  ]);
-
-  return {
-    pong,
-    keyCount,
-    supportedCommandCount: Number(supportedCommandCount),
-    status: connection.getStatus(),
-  };
-};
-
-export const removeCommandTerminal = async (
-  sandbox: Sandbox,
-  terminalId: string,
-) => {
-  const tool = sandbox.removeTool(terminalId);
-
-  if (!tool) {
-    return false;
-  }
-
-  await ConnectionRegistry.close(tool.connectionId);
-  return true;
-};
+) => requireTool(sandbox, terminalId, "command-terminal").history;

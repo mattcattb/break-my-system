@@ -1,5 +1,4 @@
-import {createBunWebSocket, upgradeWebSocket} from "hono/bun";
-import type {WSMessageReceive} from "hono/ws";
+import {upgradeWebSocket} from "hono/bun";
 import {createRouter} from "../common/hono";
 import {requireSandboxMW, type SandboxEnv} from "../sandbox/sandbox.middleware";
 import type {Context} from "hono";
@@ -24,6 +23,9 @@ const parseJsonMessage = (message: string) => {
 
 const router = createSocketRouter();
 
+router.on("ping", async ({socket}) => {
+  sendMessage(socket, {type: "pong"});
+});
 registerToolHandlers(router);
 registerCommandTerminalHandlers(router);
 
@@ -41,8 +43,6 @@ export const wsController = createRouter().get(
 
     return {
       onOpen: (_event, ws) => {
-        ws.raw.data = session;
-
         const raw = requireSocketContext(ws);
         raw.subscribe(TOPICS.sandbox(sandbox.id));
 
@@ -72,8 +72,7 @@ export const wsController = createRouter().get(
         const message = clientParseResult.data;
         await router.dispatch({session, socket: ws}, message);
       },
-      onError(evt, ws) {},
-      onClose(evt, ws) {
+      onClose(_event, ws) {
         const raw = requireSocketContext(ws);
 
         for (const tId of session.attachedToolIds) {

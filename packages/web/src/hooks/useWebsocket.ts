@@ -1,3 +1,5 @@
+import type {ClientMessage, ServerMessage} from "@break-my-system/server";
+import {useCallback} from "react";
 import useReactWebSocket, {ReadyState} from "react-use-websocket";
 
 const statusByReadyState = {
@@ -8,7 +10,7 @@ const statusByReadyState = {
   [ReadyState.UNINSTANTIATED]: "Idle",
 } as const;
 
-export const resolveWebSocketOrigin = () => {
+const resolveWebSocketOrigin = () => {
   const envUrl = import.meta.env.VITE_WS_URL?.trim();
   if (envUrl) {
     return envUrl;
@@ -22,25 +24,34 @@ export const resolveWebSocketOrigin = () => {
   return `${protocol}//${window.location.host}`;
 };
 
-export const createWebSocketUrl = (path = "/ws") =>
+const createWebSocketUrl = (path = "/ws") =>
   new URL(path, resolveWebSocketOrigin()).toString();
 
-export function useWebsocket(enabled = true) {
-  const {readyState, sendJsonMessage, lastJsonMessage} = useReactWebSocket(
-    createWebSocketUrl(),
-    {
-      share: true,
-      shouldReconnect: () => enabled,
-      reconnectAttempts: 10,
-      reconnectInterval: 3_000,
-      heartbeat: {
-        message: JSON.stringify({type: "ping"}),
-        returnMessage: JSON.stringify({type: "pong"}),
-        timeout: 60_000,
-        interval: 25_000,
+export function useSandboxWebSocket(sandboxId?: string) {
+  const enabled = Boolean(sandboxId);
+  const {readyState, sendJsonMessage, lastJsonMessage} =
+    useReactWebSocket<ServerMessage>(
+      sandboxId
+        ? createWebSocketUrl(`/ws/redis/${encodeURIComponent(sandboxId)}`)
+        : null,
+      {
+        share: true,
+        shouldReconnect: () => enabled,
+        reconnectAttempts: 10,
+        reconnectInterval: 3_000,
+        heartbeat: {
+          message: JSON.stringify({type: "ping"}),
+          returnMessage: JSON.stringify({type: "pong"}),
+          timeout: 60_000,
+          interval: 25_000,
+        },
       },
-    },
-    enabled,
+      enabled,
+    );
+
+  const sendMessage = useCallback(
+    (message: ClientMessage) => sendJsonMessage(message),
+    [sendJsonMessage],
   );
 
   return {
@@ -48,6 +59,6 @@ export function useWebsocket(enabled = true) {
     status: statusByReadyState[readyState],
     isConnected: readyState === ReadyState.OPEN,
     lastJsonMessage,
-    sendJsonMessage,
+    sendMessage,
   };
 }

@@ -1,4 +1,4 @@
-import {sendMessage, type MessageContext} from "./socket";
+import type {MessageContext} from "./socket";
 import type {
   ClientMessage,
   ClientMessageOf,

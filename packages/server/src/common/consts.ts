@@ -18,5 +18,8 @@ export const APP_ERROR_CODES = {
   TERMINAL_NOT_READY: "Terminal not ready",
   TOOL_NOT_FOUND: "Tool not found",
   UNKNOWN_SYSTEM: "Unknown system",
+  WAD_INVALID: "Invalid WAD file",
+  WAD_NOT_FOUND: "WAD not found",
+  WAD_UPLOAD_TOO_LARGE: "WAD upload is too large",
   BAD_REQUEST: "Bad Request",
 } as const;

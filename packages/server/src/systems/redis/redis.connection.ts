@@ -73,3 +73,28 @@ export const createRedisConnection = (sandboxId: string) => {
 };
 
 export type RedisConnection = ReturnType<typeof createRedisConnection>;
+
+export const getRedisDiagnostics = async (connection: RedisConnection) => {
+  if (connection.getStatus() !== "connected") {
+    return {
+      pong: null,
+      keyCount: null,
+      supportedCommandCount: null,
+      status: connection.getStatus(),
+    };
+  }
+
+  const redis = await connection.connect();
+  const [pong, keyCount, supportedCommandCount] = await Promise.all([
+    redis.ping(),
+    redis.dbSize(),
+    redis.sendCommand(["COMMAND", "COUNT"]),
+  ]);
+
+  return {
+    pong,
+    keyCount,
+    supportedCommandCount: Number(supportedCommandCount),
+    status: connection.getStatus(),
+  };
+};

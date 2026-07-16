@@ -1,8 +1,7 @@
 import {z} from "zod";
-import type {ClientStatus} from "../../../public";
-import type {Sandbox} from "../../../sandbox/sandbox";
-import {NotFoundException} from "../../../common/errors";
+import type {ClientStatus} from "../../../common/types";
 import {ConnectionRegistry} from "../../../connections/connection-registry";
+import {requireTool, type Sandbox} from "../../../sandbox/sandbox";
 
 export type KeyExplorerTool = {
   kind: "redis-key-explorer";
@@ -39,25 +38,9 @@ const createKeyExplorerTool = (connectionId: string): KeyExplorerTool => ({
   pattern: "*",
 });
 
-const requireKeyExplorer = (
-  sandbox: Sandbox,
-  explorerId: string,
-): KeyExplorerTool => {
-  const tool = sandbox.getTool(explorerId);
-
-  if (!tool || tool.kind !== "redis-key-explorer") {
-    throw new NotFoundException({
-      appCode: "TOOL_NOT_FOUND",
-      details: {toolId: explorerId},
-    });
-  }
-
-  return tool;
-};
-
 export const getKeyExplorerSnapshot = (
   tool: KeyExplorerTool,
-  status = ConnectionRegistry.getStatus(tool.connectionId),
+  status: ClientStatus,
 ): KeyExplorerSnapshot => ({
   id: tool.id,
   kind: tool.kind,
@@ -71,17 +54,22 @@ export const createKeyExplorer = (sandbox: Sandbox): KeyExplorerSnapshot => {
   const connection = ConnectionRegistry.createRedisConnection(sandbox.id);
   const tool = createKeyExplorerTool(connection.id);
 
-  sandbox.addConnection(connection.id);
   sandbox.addTool(tool);
 
-  return getKeyExplorerSnapshot(tool);
+  return getKeyExplorerSnapshot(tool, connection.getStatus());
 };
 
 export const scanKeyExplorer = async (
-  tool: KeyExplorerTool,
+  sandbox: Sandbox,
+  explorerId: string,
   input: z.infer<typeof scanKeysJson>,
 ) => {
-  const connection = ConnectionRegistry.requireRedis(tool.connectionId);
+  const tool = requireTool(sandbox, explorerId, "redis-key-explorer");
+  const connection = ConnectionRegistry.require(
+    tool.connectionId,
+    sandbox.id,
+    "redis",
+  );
   const redis = await connection.connect();
 
   tool.pattern = input.pattern;
@@ -93,10 +81,16 @@ export const scanKeyExplorer = async (
 };
 
 export const inspectKeyExplorerKey = async (
-  tool: KeyExplorerTool,
+  sandbox: Sandbox,
+  explorerId: string,
   key: string,
 ) => {
-  const connection = ConnectionRegistry.requireRedis(tool.connectionId);
+  const tool = requireTool(sandbox, explorerId, "redis-key-explorer");
+  const connection = ConnectionRegistry.require(
+    tool.connectionId,
+    sandbox.id,
+    "redis",
+  );
   const redis = await connection.connect();
   const exists = await redis.exists(key);
 
@@ -140,13 +134,4 @@ export const inspectKeyExplorerKey = async (
     value,
     size,
   };
-};
-
-export const removeKeyExplorer = async (
-  sandbox: Sandbox,
-  explorerId: string,
-) => {
-  const tool = requireKeyExplorer(sandbox, explorerId);
-  sandbox.removeTool(tool.id);
-  await ConnectionRegistry.close(tool.connectionId);
 };

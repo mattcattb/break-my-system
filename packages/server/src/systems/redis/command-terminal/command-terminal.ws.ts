@@ -7,29 +7,53 @@ export const registerCommandTerminalHandlers = (
   wsRouter: ReturnType<typeof createSocketRouter>,
 ) => {
   wsRouter.on("terminal.command", async ({session, socket}, data) => {
-    const {payload, requestId, terminalId} = data;
+    const {payload, requestId, toolId} = data;
     const sandbox = getSandbox(session.sandboxId);
 
-    if (!session.attachedToolIds.has(terminalId)) {
-      // terminal not attached for command?
+    if (!session.attachedToolIds.has(toolId)) {
+      sendMessage(socket, {
+        type: "error",
+        requestId,
+        toolId,
+        payload: {
+          code: "Terminal not ready",
+          message: "Attach the terminal before sending commands",
+        },
+      });
       return;
     }
 
-    if (!sandbox) return; //? handle no connected command here?
+    if (!sandbox) {
+      sendMessage(socket, {
+        type: "error",
+        requestId,
+        toolId,
+        payload: {code: "Sandbox not found", message: "Sandbox not found"},
+      });
+      return;
+    }
 
-    const resp = await executeCommandTerminal(
-      sandbox,
-      terminalId,
-      payload.input,
-    );
+    try {
+      const resp = await executeCommandTerminal(sandbox, toolId, payload.input);
 
-    sendMessage(socket, {
-      type: "terminal.command.result",
-      occuredAt: resp.completedAt ?? new Date().toString(),
-      requestId: requestId,
-      toolId: terminalId,
-      payload: {lines: resp.outputLines},
-      sequence: 0,
-    });
+      sendMessage(socket, {
+        type: "terminal.command.result",
+        occurredAt: resp.completedAt ?? new Date().toISOString(),
+        requestId,
+        toolId,
+        payload: {lines: resp.outputLines},
+        sequence: 0,
+      });
+    } catch (error) {
+      sendMessage(socket, {
+        type: "error",
+        requestId,
+        toolId,
+        payload: {
+          code: "Bad Request",
+          message: error instanceof Error ? error.message : "Command failed",
+        },
+      });
+    }
   });
 };

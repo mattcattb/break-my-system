@@ -30,6 +30,13 @@ function HomePage() {
       >
         &gt; redis
       </button>
+      <button
+        type="button"
+        className="block w-full max-w-xl text-left text-green-300 outline-none"
+        onClick={() => navigate({to: "/plc"})}
+      >
+        &nbsp;&nbsp;plc
+      </button>
     </div>
   );
 }

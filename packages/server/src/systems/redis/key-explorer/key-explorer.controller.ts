@@ -1,33 +1,52 @@
 import {zValidator} from "@hono/zod-validator";
 import {createRouter} from "../../../common/hono";
-import {requireTool} from "../../../sandbox/sandbox";
-import {requireSandboxMW} from "../../../sandbox/sandbox.middleware";
+import type {SandboxEnv} from "../../../sandbox/sandbox.middleware";
+import {removeSandboxTool} from "../../../sandbox/sandbox.runtime";
 import {
+  createKeyExplorer,
   inspectKeyExplorerKey,
   inspectKeyJson,
   scanKeyExplorer,
   scanKeysJson,
 } from "./kv-explorer";
 
-export const keyExplorerController = createRouter()
-  .use(requireSandboxMW)
-  .post("/scan/:toolId", zValidator("json", scanKeysJson), async (c) => {
-    const toolId = c.req.param("toolId");
-    const sandbox = c.get("sandbox");
-    const json = c.req.valid("json");
-
-    const keyExplorerTool = requireTool(sandbox, toolId, "redis-key-explorer");
-
-    const resp = await scanKeyExplorer(keyExplorerTool, json);
-    return c.json(resp, 200);
+export const keyExplorerController = createRouter<SandboxEnv>()
+  .post("/:sandboxId/key-explorer", (c) => {
+    return c.json(createKeyExplorer(c.get("sandbox")), 200);
   })
-  .post("/inspect/:toolId", zValidator("json", inspectKeyJson), async (c) => {
-    const sandbox = c.get("sandbox");
-    const toolId = c.req.param("toolId");
-    const json = c.req.valid("json");
-    const kvTool = requireTool(sandbox, toolId, "redis-key-explorer");
-
-    const resp = await inspectKeyExplorerKey(kvTool, json.key);
-
-    return c.json(resp, 200);
+  .post(
+    "/:sandboxId/key-explorer/:explorerId/scan",
+    zValidator("json", scanKeysJson),
+    async (c) => {
+      return c.json(
+        await scanKeyExplorer(
+          c.get("sandbox"),
+          c.req.param("explorerId"),
+          c.req.valid("json"),
+        ),
+        200,
+      );
+    },
+  )
+  .post(
+    "/:sandboxId/key-explorer/:explorerId/inspect",
+    zValidator("json", inspectKeyJson),
+    async (c) => {
+      return c.json(
+        await inspectKeyExplorerKey(
+          c.get("sandbox"),
+          c.req.param("explorerId"),
+          c.req.valid("json").key,
+        ),
+        200,
+      );
+    },
+  )
+  .delete("/:sandboxId/key-explorer/:explorerId", async (c) => {
+    await removeSandboxTool(
+      c.get("sandbox"),
+      c.req.param("explorerId"),
+      "redis-key-explorer",
+    );
+    return c.json({removed: true}, 200);
   });

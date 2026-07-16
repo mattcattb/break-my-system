@@ -7,8 +7,6 @@ import {
   cleanupExpiredSandboxes,
   clearAllSandboxes,
 } from "./sandbox/sandbox.runtime";
-import {TOPICS} from "./ws/socket";
-import {TerminalEmitter} from "./systems/redis/command-terminal/command-terminal";
 
 await connectRedis();
 
@@ -29,12 +27,7 @@ const sandboxCleanupInterval = setInterval(
 
 let shuttingDown = false;
 
-const unsubTerminalEvents = TerminalEmitter.subscribe(async (event) => {
-  server.publish(TOPICS.tool(event.terminalId), JSON.stringify(event));
-});
-
 const shutdown = async (reason: string) => {
-  unsubTerminalEvents();
   if (shuttingDown) return;
   shuttingDown = true;
 

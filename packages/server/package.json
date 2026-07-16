@@ -8,10 +8,10 @@
     "./public": "./src/public.ts"
   },
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "dev": "make -C native/wad && bun --watch src/index.ts",
+    "build": "make -C native/wad && bun build src/index.ts --outdir dist --target bun",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "bun test",
+    "test": "make -C native/wad && bun test",
     "start": "bun run dist/index.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

@@ -11,6 +11,7 @@ type RedisTerminalProps = {
   history: TerminalHistoryEntry[];
   isFocused: boolean;
   isSending: boolean;
+  socketStatus: string;
   onClose: (terminalId: string) => void;
   onCreate: () => void;
   onFocusChange: (focused: boolean) => void;
@@ -24,6 +25,7 @@ export function RedisTerminal({
   history,
   isFocused,
   isSending,
+  socketStatus,
   onClose,
   onCreate,
   onFocusChange,
@@ -118,7 +120,8 @@ export function RedisTerminal({
 
       <div ref={outputRef} className="min-h-0 flex-1 overflow-auto px-4 py-3">
         <div className="mb-3 text-xs text-green-800">
-          connection {terminal.connectionId} · {terminal.status}
+          redis {terminal.status} · socket {socketStatus.toLowerCase()} · connection{" "}
+          {terminal.connectionId}
         </div>
         {history.slice(visibleFrom).length === 0 ? (
           <div className="text-green-800">

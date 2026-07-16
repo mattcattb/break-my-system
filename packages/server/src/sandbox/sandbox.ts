@@ -1,23 +1,29 @@
 import {ConflictException, NotFoundException} from "../common/errors";
 import type {Tool} from "../tools/tool";
 
-export const requireTool = <K extends Tool["kind"]>(
+export function requireTool(sandbox: Sandbox, toolId: string): Tool;
+export function requireTool<K extends Tool["kind"]>(
   sandbox: Sandbox,
   toolId: string,
   expectedKind: K,
-): Extract<Tool, {kind: K}> => {
+): Extract<Tool, {kind: K}>;
+export function requireTool(
+  sandbox: Sandbox,
+  toolId: string,
+  expectedKind?: Tool["kind"],
+): Tool {
   const tool = sandbox.getTool(toolId);
   if (!tool) {
     throw new NotFoundException({
       appCode: "TOOL_NOT_FOUND",
       details: {
         toolId,
-        expectedKind,
+        ...(expectedKind && {expectedKind}),
       },
     });
   }
 
-  if (tool.kind !== expectedKind) {
+  if (expectedKind && tool.kind !== expectedKind) {
     throw new ConflictException({
       appCode: "CONFLICT_TOOL_TYPE",
       details: {
@@ -28,27 +34,17 @@ export const requireTool = <K extends Tool["kind"]>(
     });
   }
 
-  return tool as Extract<Tool, {kind: K}>;
-};
+  return tool;
+}
 
 export class Sandbox {
   public readonly id = crypto.randomUUID();
   public readonly createdAt = new Date().toISOString();
   public lastSeenAt = this.createdAt;
   private tools = new Map<string, Tool>();
-  private connectionIds = new Set<string>();
 
   touch() {
     this.lastSeenAt = new Date().toISOString();
-  }
-
-  addConnection(connectionId: string) {
-    this.connectionIds.add(connectionId);
-    this.touch();
-  }
-
-  getConnectionIds() {
-    return [...this.connectionIds];
   }
 
   addTool(tool: Tool) {

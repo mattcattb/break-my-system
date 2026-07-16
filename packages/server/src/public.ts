@@ -12,3 +12,4 @@ export type {
   CommandTerminalToolSnapshot as Terminal,
 } from "./systems/redis/command-terminal/command-terminal";
 export type {ToolKind, ToolSnapshot} from "./tools/tool";
+export type {ClientMessage, ServerMessage} from "./ws/ws.messages";

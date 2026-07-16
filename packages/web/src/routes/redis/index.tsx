@@ -18,14 +18,14 @@ function RouteComponent() {
   const sandboxListQuery = useQuery({
     queryKey: ["sandboxes"],
     queryFn: async () => {
-      return await parseResponse(rpcClient.api.sandbox.list.$get());
+      return await parseResponse(rpcClient.api.redis.sandbox.list.$get());
     },
   });
   const sandboxes = sandboxListQuery.data?.sandboxes ?? [];
 
   const createSandboxMutation = useMutation({
     mutationFn: async () => {
-      return await parseResponse(rpcClient.api.sandbox.$post());
+      return await parseResponse(rpcClient.api.redis.sandbox.$post());
     },
     onError: (err) => {
       if (err instanceof DetailedError) {
