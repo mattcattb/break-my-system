@@ -95,18 +95,24 @@ describe("sandbox routes", () => {
     });
   });
 
-  test("rejects an empty key inspection before contacting Redis", async () => {
+  test("creates a key explorer and rejects an empty key inspection", async () => {
     const sandbox = await (await client.api.sandbox.$post()).json();
-    const terminal = await (
-      await client.api.sandbox[":sandboxId"].terminal.$post({
+    const explorer = await (
+      await client.api.sandbox[":sandboxId"]["key-explorer"].$post({
         param: {sandboxId: sandbox.id},
       })
     ).json();
 
-    const response = await client.api.sandbox[":sandboxId"].terminal[
-      ":terminalId"
-    ].redis.inspect.$post({
-      param: {sandboxId: sandbox.id, terminalId: terminal.id},
+    expect(explorer).toMatchObject({
+      kind: "redis-key-explorer",
+      pattern: "*",
+      status: "idle",
+    });
+
+    const response = await client.api.sandbox[":sandboxId"]["key-explorer"][
+      ":explorerId"
+    ].inspect.$post({
+      param: {sandboxId: sandbox.id, explorerId: explorer.id},
       json: {key: ""},
     });
 

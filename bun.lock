@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "break-my-system",
+      "dependencies": {
+        "@types/bun": "^1.3.14",
+      },
     },
     "packages/server": {
       "name": "@break-my-system/server",

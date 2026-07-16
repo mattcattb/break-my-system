@@ -10,10 +10,13 @@ export const ERROR_MESSAGES = {
 } as const;
 
 export const APP_ERROR_CODES = {
+  CONFLICT_TOOL_TYPE: "Conflict Tool Type",
   SANDBOX_HEADER_MISSING: "Sandbox header missing",
   SANDBOX_NOT_FOUND: "Sandbox not found",
   SANDBOX_EXPIRED: "Sandbox expired",
   TERMINAL_NOT_FOUND: "Terminal not found",
   TERMINAL_NOT_READY: "Terminal not ready",
+  TOOL_NOT_FOUND: "Tool not found",
   UNKNOWN_SYSTEM: "Unknown system",
+  BAD_REQUEST: "Bad Request",
 } as const;

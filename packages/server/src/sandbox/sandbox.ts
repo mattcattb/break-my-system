@@ -1,4 +1,35 @@
-import type {Tool} from "./tool";
+import {ConflictException, NotFoundException} from "../common/errors";
+import type {Tool} from "../tools/tool";
+
+export const requireTool = <K extends Tool["kind"]>(
+  sandbox: Sandbox,
+  toolId: string,
+  expectedKind: K,
+): Extract<Tool, {kind: K}> => {
+  const tool = sandbox.getTool(toolId);
+  if (!tool) {
+    throw new NotFoundException({
+      appCode: "TOOL_NOT_FOUND",
+      details: {
+        toolId,
+        expectedKind,
+      },
+    });
+  }
+
+  if (tool.kind !== expectedKind) {
+    throw new ConflictException({
+      appCode: "CONFLICT_TOOL_TYPE",
+      details: {
+        toolId,
+        expectedKind,
+        actualKind: tool.kind,
+      },
+    });
+  }
+
+  return tool as Extract<Tool, {kind: K}>;
+};
 
 export class Sandbox {
   public readonly id = crypto.randomUUID();

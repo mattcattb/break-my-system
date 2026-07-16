@@ -1,3 +1,4 @@
+import type {ToolSnapshot} from "../tools/tool";
 import type {APP_ERROR_CODES, ERROR_MESSAGES} from "./consts";
 
 export type ErrorCode = keyof typeof ERROR_MESSAGES;
@@ -10,43 +11,15 @@ export type AppErrorPayload = {
   appCode?: AppErrorCode;
 };
 
-export type ClientStatus =
-  | "idle"
-  | "connecting"
-  | "connected"
-  | "disconnected"
-  | "error";
+export const CLIENT_STATUSES = [
+  "idle",
+  "connecting",
+  "connected",
+  "disconnected",
+  "error",
+] as const;
 
-export type ToolKind = "command-terminal";
-
-export type ToolSnapshot = CommandTerminalToolSnapshot;
-
-export type CommandTerminalToolSnapshot = {
-  kind: "command-terminal";
-  id: string;
-  createdAt: string;
-  connectionId: string;
-  commandCount: number;
-  status: ClientStatus;
-};
-
-export type ExecutionStatus = "pending" | "success" | "error";
-
-export type ExecutionInput = {
-  kind: "redis-command";
-  command: string[];
-};
-
-export type Execution = {
-  id: string;
-  toolId: string;
-  input: ExecutionInput;
-  status: ExecutionStatus;
-  outputLines: string[];
-  errorMessage?: string;
-  startedAt: string;
-  completedAt?: string;
-};
+export type ClientStatus = (typeof CLIENT_STATUSES)[number];
 
 export type SandboxSnapshot = {
   id: string;
@@ -54,6 +27,3 @@ export type SandboxSnapshot = {
   lastSeenAt: string;
   tools: ToolSnapshot[];
 };
-
-export type Terminal = CommandTerminalToolSnapshot;
-export type TerminalHistoryEntry = Execution;

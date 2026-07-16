@@ -13,5 +13,8 @@
     "db:studio": "bun --env-file=.env run --filter @break-my-system/server db:studio",
     "infra:up": "docker compose up -d --build",
     "infra:down": "docker compose down"
+  },
+  "dependencies": {
+    "@types/bun": "^1.3.14"
   }
 }

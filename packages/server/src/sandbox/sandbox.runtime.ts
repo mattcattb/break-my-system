@@ -1,19 +1,7 @@
-import {z} from "zod";
-import {NotFoundException} from "../common/errors";
-import type {
-  CommandTerminalToolSnapshot,
-  SandboxSnapshot,
-} from "../common/types";
-import {ConnectionRegistry} from "./client-registry";
+import type {SandboxSnapshot} from "../common/types";
+import {ConnectionRegistry} from "../connections/connection-registry";
+import {toToolSnapshot} from "../tools/tool";
 import {Sandbox} from "./sandbox";
-import {
-  createCommandTerminalTool,
-  execCommandTerminalTool,
-  getCommandTerminalToolSnapshot,
-  toToolSnapshot,
-  type CommandTerminalTool,
-  type Tool,
-} from "./tool";
 
 const SANDBOX_IDLE_MS = 10 * 60 * 1000;
 const SANDBOX_TTL_MS = 60 * 60 * 1000;
@@ -36,14 +24,6 @@ export const getSandboxSnapshot = (sandbox: Sandbox): SandboxSnapshot => ({
 export const listSandboxSnapshots = () =>
   Array.from(sandboxes.values()).map(getSandboxSnapshot);
 
-const getCommandTerminalSnapshot = (
-  tool: CommandTerminalTool,
-): CommandTerminalToolSnapshot =>
-  getCommandTerminalToolSnapshot(
-    tool,
-    ConnectionRegistry.getStatus(tool.connectionId),
-  );
-
 export function createSandbox(): Sandbox {
   const sandbox = new Sandbox();
   sandboxes.set(sandbox.id, sandbox);
@@ -59,135 +39,12 @@ export const closeSandbox = async (sandbox: Sandbox) => {
   await ConnectionRegistry.closeMany(sandbox.getConnectionIds());
 };
 
-export const createSandboxCommandTerminal = (
-  sandbox: Sandbox,
-): CommandTerminalToolSnapshot => {
-  const connection = ConnectionRegistry.createRedisConnection(sandbox.id);
-  const tool = createCommandTerminalTool({
-    connectionId: connection.id,
-  });
-
-  sandbox.addConnection(connection.id);
-  sandbox.addTool(tool);
-
-  return getCommandTerminalSnapshot(tool);
-};
-
-const getRequiredTool = (sandbox: Sandbox, toolId: string): Tool => {
-  const tool = sandbox.getTool(toolId);
-
-  if (!tool) {
-    throw new NotFoundException({
-      appCode: "TERMINAL_NOT_FOUND",
-      details: {toolId},
-    });
-  }
-
-  return tool;
-};
-
-const getRequiredCommandTerminalTool = (
-  sandbox: Sandbox,
-  toolId: string,
-): CommandTerminalTool => {
-  const tool = getRequiredTool(sandbox, toolId);
-
-  if (tool.kind !== "command-terminal") {
-    throw new NotFoundException({
-      appCode: "TERMINAL_NOT_FOUND",
-      details: {toolId},
-    });
-  }
-
-  return tool;
-};
-
-export const sendCommandJson = z.object({
-  command: z.string().trim().min(1),
-});
-
-export const inspectRedisKeyJson = z.object({
-  key: z.string().trim().min(1).max(512),
-});
-
-export const sendCommand = async (
-  sandbox: Sandbox,
-  terminalId: string,
-  command: string,
-) => {
-  const tool = getRequiredCommandTerminalTool(sandbox, terminalId);
-  return execCommandTerminalTool(tool, command.trim().split(/\s+/));
-};
-
-export const getCommandTerminalHistory = (sandbox: Sandbox, toolId: string) => {
-  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
-  return tool.history;
-};
-
-export const connectCommandTerminal = async (
-  sandbox: Sandbox,
-  toolId: string,
-) => {
-  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
-  await ConnectionRegistry.connect(tool.connectionId);
-  return getCommandTerminalSnapshot(tool);
-};
-
-export const disconnectCommandTerminal = async (
-  sandbox: Sandbox,
-  toolId: string,
-) => {
-  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
-  await ConnectionRegistry.disconnect(tool.connectionId);
-  return getCommandTerminalSnapshot(tool);
-};
-
-export const reconnectCommandTerminal = async (
-  sandbox: Sandbox,
-  toolId: string,
-) => {
-  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
-  await ConnectionRegistry.reconnect(tool.connectionId);
-  return getCommandTerminalSnapshot(tool);
-};
-
-export const getCommandTerminalRedisStatus = (
-  sandbox: Sandbox,
-  toolId: string,
-) => {
-  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
-  return ConnectionRegistry.getRedisStatus(tool.connectionId);
-};
-
-export const inspectCommandTerminalRedisKey = (
-  sandbox: Sandbox,
-  toolId: string,
-  key: string,
-) => {
-  const tool = getRequiredCommandTerminalTool(sandbox, toolId);
-  return ConnectionRegistry.inspectRedisKey(tool.connectionId, key);
-};
-
-export const removeSandboxTool = async (sandbox: Sandbox, toolId: string) => {
-  const tool = sandbox.removeTool(toolId);
-
-  if (!tool) {
-    return false;
-  }
-
-  await ConnectionRegistry.close(tool.connectionId);
-  return true;
-};
-
 export const hasTtlExpired = (sandbox: Sandbox): boolean => {
   return Date.now() - new Date(sandbox.lastSeenAt).getTime() > SANDBOX_IDLE_MS;
 };
 
 export const hasDurationExceeded = (sandbox: Sandbox): boolean => {
-  return (
-    Date.now() - new Date(sandbox.createdAt).getTime() >
-    SANDBOX_TTL_MS
-  );
+  return Date.now() - new Date(sandbox.createdAt).getTime() > SANDBOX_TTL_MS;
 };
 
 export const cleanupExpiredSandboxes = async () => {

@@ -2,21 +2,29 @@ import {createRouter} from "../common/hono";
 import {requireSandboxMW, type SandboxEnv} from "./sandbox.middleware";
 import {
   closeSandbox,
-  connectCommandTerminal,
   createSandbox,
-  createSandboxCommandTerminal,
+  getSandboxSnapshot,
+  listSandboxSnapshots,
+} from "./sandbox.runtime";
+import {
+  connectCommandTerminal,
+  createCommandTerminal,
   disconnectCommandTerminal,
+  executeCommandTerminal,
   getCommandTerminalHistory,
   getCommandTerminalRedisStatus,
-  getSandboxSnapshot,
-  inspectCommandTerminalRedisKey,
-  inspectRedisKeyJson,
-  listSandboxSnapshots,
   reconnectCommandTerminal,
-  removeSandboxTool,
-  sendCommand,
+  removeCommandTerminal,
   sendCommandJson,
-} from "./sandbox.runtime";
+} from "../systems/redis/command-terminal/command-terminal";
+import {
+  createKeyExplorer,
+  inspectKeyExplorerKey,
+  inspectKeyJson,
+  removeKeyExplorer,
+  scanKeyExplorer,
+  scanKeysJson,
+} from "../tools/kv-explorer";
 import {zValidator} from "@hono/zod-validator";
 
 export const sandboxController = createRouter<SandboxEnv>()
@@ -39,13 +47,13 @@ export const sandboxController = createRouter<SandboxEnv>()
     return c.json({removed: true}, 200);
   })
   .post("/:sandboxId/terminal", async (c) => {
-    return c.json(createSandboxCommandTerminal(c.get("sandbox")), 200);
+    return c.json(createCommandTerminal(c.get("sandbox")), 200);
   })
   .post(
     "/:sandboxId/terminal/:terminalId/command",
     zValidator("json", sendCommandJson),
     async (c) => {
-      const execution = await sendCommand(
+      const execution = await executeCommandTerminal(
         c.get("sandbox"),
         c.req.param("terminalId"),
         c.req.valid("json").command,
@@ -61,10 +69,7 @@ export const sandboxController = createRouter<SandboxEnv>()
   })
   .post("/:sandboxId/terminal/:terminalId/connect", async (c) => {
     return c.json(
-      await connectCommandTerminal(
-        c.get("sandbox"),
-        c.req.param("terminalId"),
-      ),
+      await connectCommandTerminal(c.get("sandbox"), c.req.param("terminalId")),
       200,
     );
   })
@@ -95,22 +100,46 @@ export const sandboxController = createRouter<SandboxEnv>()
       200,
     );
   })
+  .post("/:sandboxId/key-explorer", async (c) => {
+    return c.json(createKeyExplorer(c.get("sandbox")), 200);
+  })
   .post(
-    "/:sandboxId/terminal/:terminalId/redis/inspect",
-    zValidator("json", inspectRedisKeyJson),
+    "/:sandboxId/key-explorer/:explorerId/scan",
+    zValidator("json", scanKeysJson),
     async (c) => {
       return c.json(
-        await inspectCommandTerminalRedisKey(
+        await scanKeyExplorer(
           c.get("sandbox"),
-          c.req.param("terminalId"),
+          c.req.param("explorerId"),
+          c.req.valid("json"),
+        ),
+        200,
+      );
+    },
+  )
+  .post(
+    "/:sandboxId/key-explorer/:explorerId/inspect",
+    zValidator("json", inspectKeyJson),
+    async (c) => {
+      return c.json(
+        await inspectKeyExplorerKey(
+          c.get("sandbox"),
+          c.req.param("explorerId"),
           c.req.valid("json").key,
         ),
         200,
       );
     },
   )
+  .delete("/:sandboxId/key-explorer/:explorerId", async (c) => {
+    await removeKeyExplorer(c.get("sandbox"), c.req.param("explorerId"));
+    return c.json({removed: true}, 200);
+  })
   .delete("/:sandboxId/terminal/:terminalId", async (c) => {
     const sandbox = c.get("sandbox");
-    const removed = await removeSandboxTool(sandbox, c.req.param("terminalId"));
+    const removed = await removeCommandTerminal(
+      sandbox,
+      c.req.param("terminalId"),
+    );
     return c.json({removed}, 200);
   });

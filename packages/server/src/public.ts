@@ -4,14 +4,11 @@ export type {
   AppErrorCode,
   AppErrorPayload,
   ErrorCode,
-  Terminal,
-  TerminalHistoryEntry,
   ClientStatus,
-  CommandTerminalToolSnapshot,
-  Execution,
-  ExecutionInput,
-  ExecutionStatus,
   SandboxSnapshot,
-  ToolKind,
-  ToolSnapshot,
 } from "./common/types";
+export type {
+  CommandExecution as TerminalHistoryEntry,
+  CommandTerminalToolSnapshot as Terminal,
+} from "./systems/redis/command-terminal/command-terminal";
+export type {ToolKind, ToolSnapshot} from "./tools/tool";
