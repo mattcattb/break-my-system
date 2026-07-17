@@ -11,16 +11,16 @@ export const Route = createFileRoute("/plc/")({
 function PlcIndexPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const sandboxesQuery = useQuery({
-    queryKey: ["plc-sandboxes"],
-    queryFn: () => parseResponse(rpcClient.api.plc.sandbox.list.$get()),
+  const workspacesQuery = useQuery({
+    queryKey: ["plc-workspaces"],
+    queryFn: () => parseResponse(rpcClient.api.plc.workspaces.$get()),
   });
-  const createSandbox = useMutation({
-    mutationFn: () => parseResponse(rpcClient.api.plc.sandbox.$post()),
+  const createWorkspace = useMutation({
+    mutationFn: () => parseResponse(rpcClient.api.plc.workspaces.$post()),
     onError: (error) => appToast.error(error.message),
-    onSuccess: (sandbox) => {
-      queryClient.invalidateQueries({queryKey: ["plc-sandboxes"]});
-      navigate({to: "/plc/sandbox/$id", params: {id: sandbox.id}});
+    onSuccess: (workspace) => {
+      queryClient.invalidateQueries({queryKey: ["plc-workspaces"]});
+      navigate({to: "/plc/$workspaceId", params: {workspaceId: workspace.id}});
     },
   });
 
@@ -30,23 +30,23 @@ function PlcIndexPage() {
       <button
         type="button"
         className="block w-full max-w-xl text-left outline-none"
-        disabled={createSandbox.isPending}
-        onClick={() => createSandbox.mutate()}
+        disabled={createWorkspace.isPending}
+        onClick={() => createWorkspace.mutate()}
         autoFocus
       >
-        &gt; {createSandbox.isPending ? "starting sandbox" : "new sandbox"}
+        &gt; {createWorkspace.isPending ? "creating workspace" : "new workspace"}
       </button>
 
-      {sandboxesQuery.data?.sandboxes.map((sandbox) => (
+      {workspacesQuery.data?.workspaces.map((workspace) => (
         <button
-          key={sandbox.id}
+          key={workspace.id}
           type="button"
           className="mt-1 block w-full max-w-xl text-left text-green-500 outline-none hover:text-green-200"
           onClick={() =>
-            navigate({to: "/plc/sandbox/$id", params: {id: sandbox.id}})
+            navigate({to: "/plc/$workspaceId", params: {workspaceId: workspace.id}})
           }
         >
-          &nbsp;&nbsp;{sandbox.id}
+          &nbsp;&nbsp;{workspace.id}
         </button>
       ))}
     </div>

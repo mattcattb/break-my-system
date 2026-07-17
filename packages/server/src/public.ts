@@ -5,11 +5,16 @@ export type {
   AppErrorPayload,
   ErrorCode,
   ClientStatus,
-  SandboxSnapshot,
 } from "./common/types";
 export type {
-  CommandExecution as TerminalHistoryEntry,
-  CommandTerminalToolSnapshot as Terminal,
-} from "./systems/redis/command-terminal/command-terminal";
-export type {ToolKind, ToolSnapshot} from "./tools/tool";
-export type {ClientMessage, ServerMessage} from "./ws/ws.messages";
+  RedisTerminalExecution,
+  RedisTerminalSnapshot,
+} from "./redis/command-terminal";
+export type {RedisKeyExplorerSnapshot} from "./redis/key-explorer";
+export type {RedisWorkspaceSnapshot} from "./redis/redis.workspace";
+export type {
+  RedisClientMessage,
+  RedisServerMessage,
+} from "./redis/redis.ws.messages";
+export type {PlcWorkspaceSnapshot} from "./plc/plc.workspace";
+export type {WadWorkspaceSnapshot} from "./wad/wad.workspace";

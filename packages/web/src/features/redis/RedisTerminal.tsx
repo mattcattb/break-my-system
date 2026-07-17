@@ -1,14 +1,17 @@
 import {useEffect, useRef, useState} from "react";
-import type {Terminal, TerminalHistoryEntry} from "@break-my-system/server";
+import type {
+  RedisTerminalExecution,
+  RedisTerminalSnapshot,
+} from "@break-my-system/server";
 import {Maximize2, Minimize2, Plus, Trash2, X} from "lucide-react";
 import {cn} from "../../lib/cn";
 import {Button} from "../../components/ui/button";
 import {Input} from "../../components/ui/input";
 
 type RedisTerminalProps = {
-  terminal: Terminal;
-  terminals: Terminal[];
-  history: TerminalHistoryEntry[];
+  terminal: RedisTerminalSnapshot;
+  terminals: RedisTerminalSnapshot[];
+  history: RedisTerminalExecution[];
   isFocused: boolean;
   isSending: boolean;
   socketStatus: string;
@@ -120,8 +123,8 @@ export function RedisTerminal({
 
       <div ref={outputRef} className="min-h-0 flex-1 overflow-auto px-4 py-3">
         <div className="mb-3 text-xs text-green-800">
-          redis {terminal.status} · socket {socketStatus.toLowerCase()} · connection{" "}
-          {terminal.connectionId}
+          redis {terminal.status} · socket {socketStatus.toLowerCase()} · shared
+          workspace connection
         </div>
         {history.slice(visibleFrom).length === 0 ? (
           <div className="text-green-800">

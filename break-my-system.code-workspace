@@ -2,7 +2,10 @@
   "folders": [
     { "path": "." },
     { "path": "packages/server" },
-    { "path": "packages/web" }
+    { "path": "packages/web" },
+    { "path": "systems/go-redis" },
+    { "path": "systems/plc-runtime" },
+    { "path": "systems/wad-filesystem" }
   ],
   "settings": {}
 }

@@ -15,29 +15,32 @@ function RouteComponent() {
   const queryClient = useQueryClient();
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const sandboxListQuery = useQuery({
-    queryKey: ["sandboxes"],
+  const workspaceListQuery = useQuery({
+    queryKey: ["redis-workspaces"],
     queryFn: async () => {
-      return await parseResponse(rpcClient.api.redis.sandbox.list.$get());
+      return await parseResponse(rpcClient.api.redis.workspaces.$get());
     },
   });
-  const sandboxes = sandboxListQuery.data?.sandboxes ?? [];
+  const workspaces = workspaceListQuery.data?.workspaces ?? [];
 
-  const createSandboxMutation = useMutation({
+  const createWorkspaceMutation = useMutation({
     mutationFn: async () => {
-      return await parseResponse(rpcClient.api.redis.sandbox.$post());
+      return await parseResponse(rpcClient.api.redis.workspaces.$post());
     },
     onError: (err) => {
       if (err instanceof DetailedError) {
         appToast.error(err.message);
       }
     },
-    onSuccess: (sandbox) => {
-      queryClient.invalidateQueries({queryKey: ["sandboxes"]});
-      navigate({to: "/redis/sandbox/$id", params: {id: sandbox.id}});
+    onSuccess: (workspace) => {
+      queryClient.invalidateQueries({queryKey: ["redis-workspaces"]});
+      navigate({
+        to: "/redis/$workspaceId",
+        params: {workspaceId: workspace.id},
+      });
     },
   });
-  const optionCount = sandboxes.length + 1;
+  const optionCount = workspaces.length + 1;
 
   useEffect(() => {
     setSelectedIndex((current) => Math.min(current, optionCount - 1));
@@ -46,14 +49,17 @@ function RouteComponent() {
   useEffect(() => {
     const selectOption = (index: number) => {
       if (index === 0) {
-        createSandboxMutation.mutate();
+        createWorkspaceMutation.mutate();
         return;
       }
 
-      const sandbox = sandboxes[index - 1];
+      const workspace = workspaces[index - 1];
 
-      if (sandbox) {
-        navigate({to: "/redis/sandbox/$id", params: {id: sandbox.id}});
+      if (workspace) {
+        navigate({
+          to: "/redis/$workspaceId",
+          params: {workspaceId: workspace.id},
+        });
       }
     };
 
@@ -76,7 +82,13 @@ function RouteComponent() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [createSandboxMutation, navigate, optionCount, sandboxes, selectedIndex]);
+  }, [
+    createWorkspaceMutation,
+    navigate,
+    optionCount,
+    selectedIndex,
+    workspaces,
+  ]);
 
   return (
     <div className="min-h-screen bg-black p-4 font-mono text-sm text-green-300">
@@ -84,30 +96,35 @@ function RouteComponent() {
       <button
         type="button"
         className="block w-full max-w-xl text-left outline-none"
-        disabled={createSandboxMutation.isPending}
-        onClick={() => createSandboxMutation.mutate()}
+        disabled={createWorkspaceMutation.isPending}
+        onClick={() => createWorkspaceMutation.mutate()}
         onFocus={() => setSelectedIndex(0)}
       >
         {selectedIndex === 0 ? "> " : "  "}
-        {createSandboxMutation.isPending ? "creating sandbox" : "new sandbox"}
+        {createWorkspaceMutation.isPending
+          ? "creating workspace"
+          : "new workspace"}
       </button>
 
-      {sandboxListQuery.isLoading ? (
-        <div className="mt-2 text-green-700">loading sandboxes</div>
+      {workspaceListQuery.isLoading ? (
+        <div className="mt-2 text-green-700">loading workspaces</div>
       ) : null}
 
-      {sandboxes.map((sandbox, index) => (
+      {workspaces.map((workspace, index) => (
         <button
-          key={sandbox.id}
+          key={workspace.id}
           type="button"
           className="block w-full max-w-xl text-left outline-none"
           onClick={() =>
-            navigate({to: "/redis/sandbox/$id", params: {id: sandbox.id}})
+            navigate({
+              to: "/redis/$workspaceId",
+              params: {workspaceId: workspace.id},
+            })
           }
           onFocus={() => setSelectedIndex(index + 1)}
         >
           {selectedIndex === index + 1 ? "> " : "  "}
-          {sandbox.id}
+          {workspace.id}
         </button>
       ))}
     </div>

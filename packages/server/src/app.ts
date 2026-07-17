@@ -2,10 +2,10 @@ import {addErrorHandling} from "./common/errors";
 import {addGlobalMiddlewares, createRouter} from "./common/hono";
 
 import {systemsController} from "./systems/systems.controller";
-import {wsController} from "./ws/ws.controller";
-import {redisController} from "./systems/redis/redis.controller";
-import {wadController} from "./systems/wad/wad.controller";
-import {plcController} from "./systems/plc/plc.controller";
+import {redisWorkspaceController} from "./redis/redis.controller";
+import {wadController} from "./wad/wad.controller";
+import {plcController} from "./plc/plc.controller";
+import {redisWsController} from "./redis/redis.ws";
 
 export const app = createRouter();
 addGlobalMiddlewares(app);
@@ -14,10 +14,10 @@ addErrorHandling(app);
 export const api = app
   .basePath("/api")
   .route("/systems", systemsController)
-  .route("/redis", redisController)
+  .route("/redis/workspaces", redisWorkspaceController)
   .route("/wad", wadController)
   .route("/plc", plcController);
 
-app.route("/ws/redis", wsController);
+app.route("/ws/redis", redisWsController);
 
 export type AppType = typeof api;

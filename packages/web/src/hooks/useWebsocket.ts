@@ -1,4 +1,7 @@
-import type {ClientMessage, ServerMessage} from "@break-my-system/server";
+import type {
+  RedisClientMessage,
+  RedisServerMessage,
+} from "@break-my-system/server";
 import {useCallback} from "react";
 import useReactWebSocket, {ReadyState} from "react-use-websocket";
 
@@ -27,12 +30,14 @@ const resolveWebSocketOrigin = () => {
 const createWebSocketUrl = (path = "/ws") =>
   new URL(path, resolveWebSocketOrigin()).toString();
 
-export function useSandboxWebSocket(sandboxId?: string) {
-  const enabled = Boolean(sandboxId);
+export function useRedisWebSocket(workspaceId?: string) {
+  const enabled = Boolean(workspaceId);
   const {readyState, sendJsonMessage, lastJsonMessage} =
-    useReactWebSocket<ServerMessage>(
-      sandboxId
-        ? createWebSocketUrl(`/ws/redis/${encodeURIComponent(sandboxId)}`)
+    useReactWebSocket<RedisServerMessage>(
+      workspaceId
+        ? createWebSocketUrl(
+            `/ws/redis/workspaces/${encodeURIComponent(workspaceId)}`,
+          )
         : null,
       {
         share: true,
@@ -50,7 +55,7 @@ export function useSandboxWebSocket(sandboxId?: string) {
     );
 
   const sendMessage = useCallback(
-    (message: ClientMessage) => sendJsonMessage(message),
+    (message: RedisClientMessage) => sendJsonMessage(message),
     [sendJsonMessage],
   );
 

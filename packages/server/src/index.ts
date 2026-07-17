@@ -1,12 +1,8 @@
 import {websocket} from "hono/bun";
 import {app} from "./app";
 import {appEnv} from "./common/env";
-import {logger} from "./common/logger";
 import {connectRedis, disconnectRedis} from "./lib/redis";
-import {
-  cleanupExpiredSandboxes,
-  clearAllSandboxes,
-} from "./sandbox/sandbox.runtime";
+import {logger} from "./common/logger";
 
 await connectRedis();
 
@@ -16,15 +12,6 @@ const server = Bun.serve({
   websocket,
 });
 
-const sandboxCleanupInterval = setInterval(
-  () => {
-    void cleanupExpiredSandboxes().catch((error) => {
-      logger.error({error}, "Expired sandbox cleanup failed");
-    });
-  },
-  3 * 60 * 1000,
-);
-
 let shuttingDown = false;
 
 const shutdown = async (reason: string) => {
@@ -32,11 +19,8 @@ const shutdown = async (reason: string) => {
   shuttingDown = true;
 
   logger.info({reason}, "Server shutting down");
-  clearInterval(sandboxCleanupInterval);
-
   try {
     await server.stop(true);
-    await clearAllSandboxes();
     await disconnectRedis();
     logger.info({reason}, "Server shutdown complete");
   } catch (error) {
