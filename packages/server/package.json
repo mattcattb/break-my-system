@@ -8,10 +8,10 @@
     "./public": "./src/public.ts"
   },
   "scripts": {
-    "dev": "make -C native/wad && bun --watch src/index.ts",
-    "build": "make -C native/wad && bun build src/index.ts --outdir dist --target bun",
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "make -C native/wad && bun test",
+    "test": "make -C ../../systems/wad-filesystem && sh -c 'PORT=27373 WAD_DATA_DIR=/tmp/break-my-system/wads ../../systems/wad-filesystem/wadsrv-bin & pid=$!; trap \"kill $pid 2>/dev/null || true\" EXIT; sleep 0.1; bun test'",
     "start": "bun run dist/index.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

@@ -1,4 +1,4 @@
-import type {Terminal} from "@break-my-system/server";
+import type {RedisTerminalSnapshot} from "@break-my-system/server";
 import {Database, Plus, Plug, PlugZap, RotateCcw} from "lucide-react";
 import {Button} from "../../components/ui/button";
 import {cn} from "../../lib/cn";
@@ -13,7 +13,7 @@ export function RedisStatusBar({
   onDisconnect,
   onReconnect,
 }: {
-  terminal: Terminal;
+  terminal: RedisTerminalSnapshot;
   keyCount?: number | null;
   supportedCommandCount?: number | null;
   isConnectionPending: boolean;

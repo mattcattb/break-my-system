@@ -11,6 +11,9 @@
     "db:generate": "bun --env-file=.env run --filter @break-my-system/server db:generate",
     "db:migrate": "bun --env-file=.env run --filter @break-my-system/server db:migrate",
     "db:studio": "bun --env-file=.env run --filter @break-my-system/server db:studio",
+    "wad:build": "make -C systems/wad-filesystem",
+    "wad:test": "make -C systems/wad-filesystem",
+    "wad:dev": "make -C systems/wad-filesystem && systems/wad-filesystem/wadsrv-bin",
     "infra:up": "docker compose up -d --build",
     "infra:down": "docker compose down"
   },

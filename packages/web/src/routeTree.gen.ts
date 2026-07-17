@@ -13,9 +13,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WadIndexRouteImport } from './routes/wad/index'
 import { Route as RedisIndexRouteImport } from './routes/redis/index'
 import { Route as PlcIndexRouteImport } from './routes/plc/index'
-import { Route as WadSandboxIdxRouteImport } from './routes/wad/sandbox.$idx'
-import { Route as RedisSandboxIdRouteImport } from './routes/redis/sandbox.$id'
-import { Route as PlcSandboxIdRouteImport } from './routes/plc/sandbox.$id'
+import { Route as WadWorkspaceIdRouteImport } from './routes/wad/$workspaceId'
+import { Route as RedisWorkspaceIdRouteImport } from './routes/redis/$workspaceId'
+import { Route as PlcWorkspaceIdRouteImport } from './routes/plc/$workspaceId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -37,88 +37,88 @@ const PlcIndexRoute = PlcIndexRouteImport.update({
   path: '/plc/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WadSandboxIdxRoute = WadSandboxIdxRouteImport.update({
-  id: '/wad/sandbox/$idx',
-  path: '/wad/sandbox/$idx',
+const WadWorkspaceIdRoute = WadWorkspaceIdRouteImport.update({
+  id: '/wad/$workspaceId',
+  path: '/wad/$workspaceId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RedisSandboxIdRoute = RedisSandboxIdRouteImport.update({
-  id: '/redis/sandbox/$id',
-  path: '/redis/sandbox/$id',
+const RedisWorkspaceIdRoute = RedisWorkspaceIdRouteImport.update({
+  id: '/redis/$workspaceId',
+  path: '/redis/$workspaceId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlcSandboxIdRoute = PlcSandboxIdRouteImport.update({
-  id: '/plc/sandbox/$id',
-  path: '/plc/sandbox/$id',
+const PlcWorkspaceIdRoute = PlcWorkspaceIdRouteImport.update({
+  id: '/plc/$workspaceId',
+  path: '/plc/$workspaceId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/plc/$workspaceId': typeof PlcWorkspaceIdRoute
+  '/redis/$workspaceId': typeof RedisWorkspaceIdRoute
+  '/wad/$workspaceId': typeof WadWorkspaceIdRoute
   '/plc/': typeof PlcIndexRoute
   '/redis/': typeof RedisIndexRoute
   '/wad/': typeof WadIndexRoute
-  '/plc/sandbox/$id': typeof PlcSandboxIdRoute
-  '/redis/sandbox/$id': typeof RedisSandboxIdRoute
-  '/wad/sandbox/$idx': typeof WadSandboxIdxRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/plc/$workspaceId': typeof PlcWorkspaceIdRoute
+  '/redis/$workspaceId': typeof RedisWorkspaceIdRoute
+  '/wad/$workspaceId': typeof WadWorkspaceIdRoute
   '/plc': typeof PlcIndexRoute
   '/redis': typeof RedisIndexRoute
   '/wad': typeof WadIndexRoute
-  '/plc/sandbox/$id': typeof PlcSandboxIdRoute
-  '/redis/sandbox/$id': typeof RedisSandboxIdRoute
-  '/wad/sandbox/$idx': typeof WadSandboxIdxRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/plc/$workspaceId': typeof PlcWorkspaceIdRoute
+  '/redis/$workspaceId': typeof RedisWorkspaceIdRoute
+  '/wad/$workspaceId': typeof WadWorkspaceIdRoute
   '/plc/': typeof PlcIndexRoute
   '/redis/': typeof RedisIndexRoute
   '/wad/': typeof WadIndexRoute
-  '/plc/sandbox/$id': typeof PlcSandboxIdRoute
-  '/redis/sandbox/$id': typeof RedisSandboxIdRoute
-  '/wad/sandbox/$idx': typeof WadSandboxIdxRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/plc/$workspaceId'
+    | '/redis/$workspaceId'
+    | '/wad/$workspaceId'
     | '/plc/'
     | '/redis/'
     | '/wad/'
-    | '/plc/sandbox/$id'
-    | '/redis/sandbox/$id'
-    | '/wad/sandbox/$idx'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/plc/$workspaceId'
+    | '/redis/$workspaceId'
+    | '/wad/$workspaceId'
     | '/plc'
     | '/redis'
     | '/wad'
-    | '/plc/sandbox/$id'
-    | '/redis/sandbox/$id'
-    | '/wad/sandbox/$idx'
   id:
     | '__root__'
     | '/'
+    | '/plc/$workspaceId'
+    | '/redis/$workspaceId'
+    | '/wad/$workspaceId'
     | '/plc/'
     | '/redis/'
     | '/wad/'
-    | '/plc/sandbox/$id'
-    | '/redis/sandbox/$id'
-    | '/wad/sandbox/$idx'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PlcWorkspaceIdRoute: typeof PlcWorkspaceIdRoute
+  RedisWorkspaceIdRoute: typeof RedisWorkspaceIdRoute
+  WadWorkspaceIdRoute: typeof WadWorkspaceIdRoute
   PlcIndexRoute: typeof PlcIndexRoute
   RedisIndexRoute: typeof RedisIndexRoute
   WadIndexRoute: typeof WadIndexRoute
-  PlcSandboxIdRoute: typeof PlcSandboxIdRoute
-  RedisSandboxIdRoute: typeof RedisSandboxIdRoute
-  WadSandboxIdxRoute: typeof WadSandboxIdxRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -151,25 +151,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlcIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/wad/sandbox/$idx': {
-      id: '/wad/sandbox/$idx'
-      path: '/wad/sandbox/$idx'
-      fullPath: '/wad/sandbox/$idx'
-      preLoaderRoute: typeof WadSandboxIdxRouteImport
+    '/wad/$workspaceId': {
+      id: '/wad/$workspaceId'
+      path: '/wad/$workspaceId'
+      fullPath: '/wad/$workspaceId'
+      preLoaderRoute: typeof WadWorkspaceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/redis/sandbox/$id': {
-      id: '/redis/sandbox/$id'
-      path: '/redis/sandbox/$id'
-      fullPath: '/redis/sandbox/$id'
-      preLoaderRoute: typeof RedisSandboxIdRouteImport
+    '/redis/$workspaceId': {
+      id: '/redis/$workspaceId'
+      path: '/redis/$workspaceId'
+      fullPath: '/redis/$workspaceId'
+      preLoaderRoute: typeof RedisWorkspaceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/plc/sandbox/$id': {
-      id: '/plc/sandbox/$id'
-      path: '/plc/sandbox/$id'
-      fullPath: '/plc/sandbox/$id'
-      preLoaderRoute: typeof PlcSandboxIdRouteImport
+    '/plc/$workspaceId': {
+      id: '/plc/$workspaceId'
+      path: '/plc/$workspaceId'
+      fullPath: '/plc/$workspaceId'
+      preLoaderRoute: typeof PlcWorkspaceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -177,12 +177,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PlcWorkspaceIdRoute: PlcWorkspaceIdRoute,
+  RedisWorkspaceIdRoute: RedisWorkspaceIdRoute,
+  WadWorkspaceIdRoute: WadWorkspaceIdRoute,
   PlcIndexRoute: PlcIndexRoute,
   RedisIndexRoute: RedisIndexRoute,
   WadIndexRoute: WadIndexRoute,
-  PlcSandboxIdRoute: PlcSandboxIdRoute,
-  RedisSandboxIdRoute: RedisSandboxIdRoute,
-  WadSandboxIdxRoute: WadSandboxIdxRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

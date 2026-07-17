@@ -1,4 +1,4 @@
-import type {ToolSnapshot} from "@break-my-system/server";
+import type {RedisKeyExplorerSnapshot} from "@break-my-system/server";
 import type {InferResponseType} from "hono/client";
 import {KeyRound, RefreshCw, Search} from "lucide-react";
 import {useEffect, useState} from "react";
@@ -7,13 +7,13 @@ import {Input} from "../../components/ui/input";
 import {cn} from "../../lib/cn";
 import {rpcClient} from "../../lib/rpc.client";
 
-type KeyExplorer = Extract<ToolSnapshot, {kind: "redis-key-explorer"}>;
+type KeyExplorer = RedisKeyExplorerSnapshot;
 type KeyScan = InferResponseType<
-  (typeof rpcClient.api.redis.sandbox)[":sandboxId"]["key-explorer"][":explorerId"]["scan"]["$post"],
+  (typeof rpcClient.api.redis.workspaces)[":workspaceId"]["key-explorers"][":explorerId"]["scan"]["$post"],
   200
 >;
 type KeyInspection = InferResponseType<
-  (typeof rpcClient.api.redis.sandbox)[":sandboxId"]["key-explorer"][":explorerId"]["inspect"]["$post"],
+  (typeof rpcClient.api.redis.workspaces)[":workspaceId"]["key-explorers"][":explorerId"]["inspect"]["$post"],
   200
 >;
 

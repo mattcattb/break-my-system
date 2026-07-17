@@ -1,0 +1,9 @@
+[submodule "systems/go-redis"]
+	path = systems/go-redis
+	url = https://github.com/mattcattb/go-redis.git
+[submodule "systems/plc-runtime"]
+	path = systems/plc-runtime
+	url = https://github.com/mattcattb/PLCProject.git
+[submodule "systems/wad-filesystem"]
+	path = systems/wad-filesystem
+	url = https://github.com/mattcattb/Wad-Fuse-Filesystem.git
