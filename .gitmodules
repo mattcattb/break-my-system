@@ -7,3 +7,6 @@
 [submodule "systems/wad-filesystem"]
 	path = systems/wad-filesystem
 	url = https://github.com/mattcattb/Wad-Fuse-Filesystem.git
+[submodule "systems/minesweeper"]
+	path = systems/minesweeper
+	url = https://github.com/mattcattb/Minesweeper.git
