@@ -2,23 +2,20 @@ import type {MinesweeperServerMessage} from "@break-my-system/server";
 import {queryOptions, useSuspenseQuery} from "@tanstack/react-query";
 import {createFileRoute, redirect, useNavigate} from "@tanstack/react-router";
 import {
-  ArrowLeft,
   Bomb,
   Flag,
   RotateCcw,
   Timer,
   Trophy,
-  Wifi,
-  WifiOff,
 } from "lucide-react";
 import {DetailedError, parseResponse} from "hono/client";
 import {useEffect, useState} from "react";
 import {ResourceState} from "../../components/common/ResourceState";
+import {WorkspaceHeader} from "../../components/common/SystemShell";
 import {Button} from "../../components/ui/button";
 import {LeaderboardModal} from "../../features/minesweeper/LeaderboardModal";
 import {MinesweeperBoard} from "../../features/minesweeper/MinesweeperBoard";
 import {useMinesweeperWs} from "../../features/minesweeper/useMinesweeperWs";
-import {cn} from "../../lib/cn";
 import {rpcClient} from "../../lib/rpc.client";
 import {appToast} from "../../lib/toast";
 
@@ -86,7 +83,6 @@ function MinesweeperGameError() {
 
 function MinesweeperGamePage() {
   const {gameId} = Route.useParams();
-  const navigate = useNavigate();
   const {data: workspace} = useSuspenseQuery(workspaceQueryOptions(gameId));
   const [snapshot, setSnapshot] = useState<GameSnapshot>();
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
@@ -128,50 +124,21 @@ function MinesweeperGamePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="border-b border-border bg-surface/90">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Back to Minesweeper workspaces"
-              onClick={() => navigate({to: "/minesweeper"})}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="min-w-0">
-              <h1 className="flex items-center gap-2 text-sm font-semibold">
-                <Bomb className="h-4 w-4 text-primary" />
-                Minesweeper
-              </h1>
-              <p className="truncate font-mono text-[11px] text-muted-foreground">
-                {gameId}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "flex h-8 items-center gap-2 border px-3 text-xs",
-                isConnected
-                  ? "border-success/50 text-success"
-                  : "border-border text-muted-foreground",
-              )}
-            >
-              {isConnected ? (
-                <Wifi className="h-3.5 w-3.5" />
-              ) : (
-                <WifiOff className="h-3.5 w-3.5" />
-              )}
-              {status}
-            </span>
-            <Button variant="outline" onClick={() => setLeaderboardOpen(true)}>
+      <WorkspaceHeader
+        system="Minesweeper"
+        workspaceId={gameId}
+        status={isConnected ? snapshot?.status ?? "connected" : status}
+        backTo="/minesweeper"
+        icon={<Bomb className="size-4 text-cyan-400" />}
+        meta="authoritative C++ board"
+        actions={<>
+            <Button variant="outline" size="sm" onClick={() => setLeaderboardOpen(true)}>
               <Trophy className="h-4 w-4 text-warning" />
               <span className="hidden sm:inline">Leaderboard</span>
             </Button>
             <Button
               variant="outline"
+              size="sm"
               disabled={!isConnected}
               onClick={() =>
                 sendMessage({
@@ -183,9 +150,8 @@ function MinesweeperGamePage() {
               <RotateCcw className="h-4 w-4" />
               <span className="hidden sm:inline">Restart</span>
             </Button>
-          </div>
-        </div>
-      </header>
+          </>}
+      />
 
       <div className="grid grid-cols-3 border-b border-border bg-surface text-sm sm:grid-cols-[repeat(3,10rem)] sm:justify-center">
         <div className="flex items-center justify-center gap-2 border-r border-border px-4 py-3">

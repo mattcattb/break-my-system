@@ -52,7 +52,7 @@ export function RedisTerminal({
   return (
     <section
       className={cn(
-        "flex min-h-0 flex-col overflow-hidden border border-green-900 bg-black font-mono text-sm text-green-300",
+        "terminal-surface flex min-h-0 flex-col overflow-hidden border border-green-900/70 font-mono text-sm text-green-300",
         isFocused && "fixed inset-0 z-50 border-0",
       )}
     >

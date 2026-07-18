@@ -1,9 +1,10 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {createFileRoute, useNavigate} from "@tanstack/react-router";
-import {ArrowLeft, Bomb, Clock3, Play, Trophy, Users} from "lucide-react";
+import {Bomb, Clock3, Play, Trophy, Users} from "lucide-react";
 import {parseResponse} from "hono/client";
 import {useState} from "react";
 import {Button} from "../../components/ui/button";
+import {AppHeader} from "../../components/common/SystemShell";
 import {Input} from "../../components/ui/input";
 import {Label} from "../../components/ui/label";
 import {LeaderboardModal} from "../../features/minesweeper/LeaderboardModal";
@@ -57,34 +58,19 @@ function MinesweeperIndexPage() {
     config.mines < config.rows * config.cols;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-surface/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <button
-            type="button"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-            onClick={() => navigate({to: "/"})}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Systems
-          </button>
-          <Button variant="outline" onClick={() => setLeaderboardOpen(true)}>
-            <Trophy className="h-4 w-4 text-warning" />
-            Leaderboard
-          </Button>
-        </div>
-      </header>
+    <div className="workshop-page">
+      <AppHeader currentSystem="Minesweeper" />
 
-      <main className="mx-auto grid max-w-6xl gap-8 px-5 py-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(19rem,0.85fr)]">
+      <main className="page-container grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,0.9fr)]">
         <section>
-          <div className="flex h-12 w-12 items-center justify-center border border-primary bg-primary/10 text-primary">
+          <div className="system-glyph size-12 text-cyan-400">
             <Bomb className="h-6 w-6" />
           </div>
-          <p className="mt-6 font-mono text-xs uppercase tracking-[0.2em] text-primary">
-            Authoritative runtime
+          <p className="eyebrow mt-7">
+            System 04 / C++ realtime
           </p>
-          <h1 className="mt-2 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-            Minesweeper, driven by the server.
+          <h1 className="display-title mt-3">
+            Every tile.<br />Server truth.
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground">
             Create an isolated workspace, connect through the WebSocket gateway,
@@ -118,8 +104,11 @@ function MinesweeperIndexPage() {
           </div>
         </section>
 
-        <section className="border border-border bg-surface p-5 sm:p-6">
-          <h2 className="text-lg font-semibold">New workspace</h2>
+        <section className="panel p-5 sm:p-6">
+          <div className="mb-5 flex items-center justify-between border-b border-border pb-4">
+            <div><p className="eyebrow">Workspace registry</p><h2 className="mt-1 text-lg font-semibold">Configure a new board</h2></div>
+            <Button variant="outline" size="sm" onClick={() => setLeaderboardOpen(true)}><Trophy className="h-4 w-4 text-warning" />Leaderboard</Button>
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             One API lease maps to one game in the C++ runtime.
           </p>
