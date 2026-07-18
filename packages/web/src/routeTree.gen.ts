@@ -13,9 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WadIndexRouteImport } from './routes/wad/index'
 import { Route as RedisIndexRouteImport } from './routes/redis/index'
 import { Route as PlcIndexRouteImport } from './routes/plc/index'
+import { Route as MinesweeperIndexRouteImport } from './routes/minesweeper/index'
 import { Route as WadWorkspaceIdRouteImport } from './routes/wad/$workspaceId'
 import { Route as RedisWorkspaceIdRouteImport } from './routes/redis/$workspaceId'
 import { Route as PlcWorkspaceIdRouteImport } from './routes/plc/$workspaceId'
+import { Route as MinesweeperGameIdRouteImport } from './routes/minesweeper/$gameId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -37,6 +39,11 @@ const PlcIndexRoute = PlcIndexRouteImport.update({
   path: '/plc/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MinesweeperIndexRoute = MinesweeperIndexRouteImport.update({
+  id: '/minesweeper/',
+  path: '/minesweeper/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WadWorkspaceIdRoute = WadWorkspaceIdRouteImport.update({
   id: '/wad/$workspaceId',
   path: '/wad/$workspaceId',
@@ -52,21 +59,30 @@ const PlcWorkspaceIdRoute = PlcWorkspaceIdRouteImport.update({
   path: '/plc/$workspaceId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MinesweeperGameIdRoute = MinesweeperGameIdRouteImport.update({
+  id: '/minesweeper/$gameId',
+  path: '/minesweeper/$gameId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/minesweeper/$gameId': typeof MinesweeperGameIdRoute
   '/plc/$workspaceId': typeof PlcWorkspaceIdRoute
   '/redis/$workspaceId': typeof RedisWorkspaceIdRoute
   '/wad/$workspaceId': typeof WadWorkspaceIdRoute
+  '/minesweeper/': typeof MinesweeperIndexRoute
   '/plc/': typeof PlcIndexRoute
   '/redis/': typeof RedisIndexRoute
   '/wad/': typeof WadIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/minesweeper/$gameId': typeof MinesweeperGameIdRoute
   '/plc/$workspaceId': typeof PlcWorkspaceIdRoute
   '/redis/$workspaceId': typeof RedisWorkspaceIdRoute
   '/wad/$workspaceId': typeof WadWorkspaceIdRoute
+  '/minesweeper': typeof MinesweeperIndexRoute
   '/plc': typeof PlcIndexRoute
   '/redis': typeof RedisIndexRoute
   '/wad': typeof WadIndexRoute
@@ -74,9 +90,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/minesweeper/$gameId': typeof MinesweeperGameIdRoute
   '/plc/$workspaceId': typeof PlcWorkspaceIdRoute
   '/redis/$workspaceId': typeof RedisWorkspaceIdRoute
   '/wad/$workspaceId': typeof WadWorkspaceIdRoute
+  '/minesweeper/': typeof MinesweeperIndexRoute
   '/plc/': typeof PlcIndexRoute
   '/redis/': typeof RedisIndexRoute
   '/wad/': typeof WadIndexRoute
@@ -85,27 +103,33 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/minesweeper/$gameId'
     | '/plc/$workspaceId'
     | '/redis/$workspaceId'
     | '/wad/$workspaceId'
+    | '/minesweeper/'
     | '/plc/'
     | '/redis/'
     | '/wad/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/minesweeper/$gameId'
     | '/plc/$workspaceId'
     | '/redis/$workspaceId'
     | '/wad/$workspaceId'
+    | '/minesweeper'
     | '/plc'
     | '/redis'
     | '/wad'
   id:
     | '__root__'
     | '/'
+    | '/minesweeper/$gameId'
     | '/plc/$workspaceId'
     | '/redis/$workspaceId'
     | '/wad/$workspaceId'
+    | '/minesweeper/'
     | '/plc/'
     | '/redis/'
     | '/wad/'
@@ -113,9 +137,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MinesweeperGameIdRoute: typeof MinesweeperGameIdRoute
   PlcWorkspaceIdRoute: typeof PlcWorkspaceIdRoute
   RedisWorkspaceIdRoute: typeof RedisWorkspaceIdRoute
   WadWorkspaceIdRoute: typeof WadWorkspaceIdRoute
+  MinesweeperIndexRoute: typeof MinesweeperIndexRoute
   PlcIndexRoute: typeof PlcIndexRoute
   RedisIndexRoute: typeof RedisIndexRoute
   WadIndexRoute: typeof WadIndexRoute
@@ -151,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlcIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/minesweeper/': {
+      id: '/minesweeper/'
+      path: '/minesweeper'
+      fullPath: '/minesweeper/'
+      preLoaderRoute: typeof MinesweeperIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wad/$workspaceId': {
       id: '/wad/$workspaceId'
       path: '/wad/$workspaceId'
@@ -172,14 +205,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlcWorkspaceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/minesweeper/$gameId': {
+      id: '/minesweeper/$gameId'
+      path: '/minesweeper/$gameId'
+      fullPath: '/minesweeper/$gameId'
+      preLoaderRoute: typeof MinesweeperGameIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MinesweeperGameIdRoute: MinesweeperGameIdRoute,
   PlcWorkspaceIdRoute: PlcWorkspaceIdRoute,
   RedisWorkspaceIdRoute: RedisWorkspaceIdRoute,
   WadWorkspaceIdRoute: WadWorkspaceIdRoute,
+  MinesweeperIndexRoute: MinesweeperIndexRoute,
   PlcIndexRoute: PlcIndexRoute,
   RedisIndexRoute: RedisIndexRoute,
   WadIndexRoute: WadIndexRoute,

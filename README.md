@@ -22,6 +22,7 @@ packages/
 
 systems/
   go-redis/       Independent Go Redis repository (submodule)
+  minesweeper/     Independent C++/SFML Minesweeper repository (submodule)
   plc-runtime/    Independent PLCProject repository (submodule)
   wad-filesystem/ Independent Wad-Fuse-Filesystem repository (submodule)
 

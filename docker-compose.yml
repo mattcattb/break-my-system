@@ -58,6 +58,18 @@ services:
     ports:
       - "${PLC_PORT:-27474}:7474"
 
+  minesweeper:
+    build:
+      context: ./systems/minesweeper
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      MINESWEEPER_MODE: server
+      MINESWEEPER_DATA_DIR: /data
+      MINESWEEPER_LEADERBOARD_PATH: ${MINESWEEPER_LEADERBOARD_PATH:-/data/leaderboard.csv}
+    volumes:
+      - minesweeper-data:/data
+
   api:
     profiles: ["production"]
     build:
@@ -88,3 +100,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  minesweeper-data:

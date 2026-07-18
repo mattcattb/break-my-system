@@ -37,6 +37,13 @@ function HomePage() {
       >
         &nbsp;&nbsp;plc
       </button>
+      <button
+        type="button"
+        className="block w-full max-w-xl text-left text-green-300 outline-none"
+        onClick={() => navigate({to: "/minesweeper"})}
+      >
+        &nbsp;&nbsp;minesweeper
+      </button>
     </div>
   );
 }

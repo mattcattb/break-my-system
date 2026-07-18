@@ -55,4 +55,10 @@ export const appToast: AppToastApi = {
   },
 };
 
-export const toastAnyError = () => {};
+export const getErrorMessage = (
+  error: unknown,
+  fallback = "Something went wrong",
+) => (error instanceof Error && error.message ? error.message : fallback);
+
+export const toastAnyError = (error: unknown, fallback?: string) =>
+  appToast.error(getErrorMessage(error, fallback));
