@@ -1,6 +1,5 @@
 import {z} from "zod";
 
-const requestIdSchema = z.string().trim().min(1).max(100);
 const coordinateSchema = z.number().int().nonnegative();
 const tileCoordinatePayloadSchema = z
   .object({
@@ -14,29 +13,17 @@ export const minesweeperClientMessageSchema = z.discriminatedUnion("type", [
   z
     .object({
       type: z.literal("tile.reveal"),
-      requestId: requestIdSchema,
       payload: tileCoordinatePayloadSchema,
     })
     .strict(),
   z
     .object({
       type: z.literal("tile.flag.toggle"),
-      requestId: requestIdSchema,
       payload: tileCoordinatePayloadSchema,
     })
     .strict(),
-  z
-    .object({
-      type: z.literal("game.restart"),
-      requestId: requestIdSchema,
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal("game.resync"),
-      requestId: requestIdSchema,
-    })
-    .strict(),
+  z.object({type: z.literal("game.restart")}).strict(),
+  z.object({type: z.literal("game.resync")}).strict(),
 ]);
 
 export type MinesweeperClientMessage = z.infer<
@@ -66,14 +53,36 @@ const tileSchema = z.discriminatedUnion("state", [
   revealedTileSchema,
 ]);
 
+export const minesweeperGameSnapshotSchema = z
+  .object({
+    revision: z.number().int().nonnegative(),
+    status: z.enum(["playing", "won", "lost"]),
+    elapsedSeconds: z.number().int().nonnegative(),
+    remainingMines: z.number().int(),
+    rows: z.number().int().positive(),
+    cols: z.number().int().positive(),
+    tiles: z.array(tileSchema),
+  })
+  .strict();
+
+export const minesweeperErrorSchema = z
+  .object({
+    code: z.enum([
+      "BAD_REQUEST",
+      "GAME_NOT_FOUND",
+      "INVALID_ACTION",
+      "SYSTEM_UNAVAILABLE",
+    ]),
+    message: z.string(),
+  })
+  .strict();
+
 export const minesweeperServerMessageSchema = z.discriminatedUnion("type", [
   z
     .object({
       type: z.literal("socket.ready"),
       payload: z
         .object({
-          gameId: z.string().trim().min(1),
-          connectionId: z.string().trim().min(1),
           protocolVersion: z.literal(1),
         })
         .strict(),
@@ -82,36 +91,13 @@ export const minesweeperServerMessageSchema = z.discriminatedUnion("type", [
   z
     .object({
       type: z.literal("game.snapshot"),
-      requestId: requestIdSchema.optional(),
-      payload: z
-        .object({
-          gameId: z.string().trim().min(1),
-          revision: z.number().int().nonnegative(),
-          status: z.enum(["playing", "won", "lost"]),
-          elapsedSeconds: z.number().int().nonnegative(),
-          remainingMines: z.number().int(),
-          rows: z.number().int().positive(),
-          cols: z.number().int().positive(),
-          tiles: z.array(tileSchema),
-        })
-        .strict(),
+      payload: minesweeperGameSnapshotSchema,
     })
     .strict(),
   z
     .object({
       type: z.literal("error"),
-      requestId: requestIdSchema.optional(),
-      payload: z
-        .object({
-          code: z.enum([
-            "BAD_REQUEST",
-            "GAME_NOT_FOUND",
-            "INVALID_ACTION",
-            "SYSTEM_UNAVAILABLE",
-          ]),
-          message: z.string(),
-        })
-        .strict(),
+      payload: minesweeperErrorSchema,
     })
     .strict(),
   z.object({type: z.literal("pong")}).strict(),

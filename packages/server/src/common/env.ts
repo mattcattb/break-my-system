@@ -4,6 +4,13 @@ const DEFAULT_REDIS_URL = "redis://localhost:26379";
 const DEFAULT_WAD_DATA_DIR = "/tmp/break-my-system/wads";
 
 const appEnvSchema = z.object({
+  MINESWEEPER_HOST: z.string().default("127.0.0.1"),
+  MINESWEEPER_PORT: z.preprocess((value) => {
+    if (typeof value === "string" && value.trim() !== "") {
+      return Number(value);
+    }
+    return value;
+  }, z.number().int().positive().default(27575)),
   PLC_HOST: z.string().default("127.0.0.1"),
   PLC_PORT: z.preprocess((value) => {
     if (typeof value === "string" && value.trim() !== "") {

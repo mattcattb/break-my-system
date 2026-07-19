@@ -1,4 +1,3 @@
-import type {MinesweeperServerMessage} from "@break-my-system/server";
 import {queryOptions, useSuspenseQuery} from "@tanstack/react-query";
 import {createFileRoute, redirect, useNavigate} from "@tanstack/react-router";
 import {
@@ -15,14 +14,9 @@ import {WorkspaceHeader} from "../../components/common/SystemShell";
 import {Button} from "../../components/ui/button";
 import {LeaderboardModal} from "../../features/minesweeper/LeaderboardModal";
 import {MinesweeperBoard} from "../../features/minesweeper/MinesweeperBoard";
-import {useMinesweeperWs} from "../../features/minesweeper/useMinesweeperWs";
+import {useMinesweeperClient} from "../../features/minesweeper/useMinesweeperClient";
 import {rpcClient} from "../../lib/rpc.client";
 import {appToast} from "../../lib/toast";
-
-type GameSnapshot = Extract<
-  MinesweeperServerMessage,
-  {type: "game.snapshot"}
->["payload"];
 
 const workspaceQueryOptions = (gameId: string) =>
   queryOptions({
@@ -84,43 +78,22 @@ function MinesweeperGameError() {
 function MinesweeperGamePage() {
   const {gameId} = Route.useParams();
   const {data: workspace} = useSuspenseQuery(workspaceQueryOptions(gameId));
-  const [snapshot, setSnapshot] = useState<GameSnapshot>();
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
-  const {isConnected, status, lastMessage, sendMessage} =
-    useMinesweeperWs(gameId);
+  const {
+    isConnected,
+    status,
+    snapshot,
+    lastError,
+    revealTile,
+    toggleFlag,
+    restartGame,
+  } = useMinesweeperClient(gameId);
 
   useEffect(() => {
-    if (!lastMessage) return;
-
-    if (lastMessage.type === "socket.ready") {
-      setSnapshot(undefined);
-      sendMessage({type: "game.resync", requestId: crypto.randomUUID()});
-      return;
-    }
-
-    if (lastMessage.type === "game.snapshot") {
-      setSnapshot(lastMessage.payload);
-      return;
-    }
-
-    if (lastMessage.type === "error") {
-      appToast.error(lastMessage.payload.message);
-    }
-  }, [lastMessage, sendMessage]);
+    if (lastError) appToast.error(lastError.message);
+  }, [lastError]);
 
   const boardDisabled = snapshot?.status !== "playing" || !isConnected;
-
-  const sendTileCommand = (
-    type: "tile.reveal" | "tile.flag.toggle",
-    row: number,
-    col: number,
-  ) => {
-    sendMessage({
-      type,
-      requestId: crypto.randomUUID(),
-      payload: {row, col},
-    });
-  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -140,12 +113,7 @@ function MinesweeperGamePage() {
               variant="outline"
               size="sm"
               disabled={!isConnected}
-              onClick={() =>
-                sendMessage({
-                  type: "game.restart",
-                  requestId: crypto.randomUUID(),
-                })
-              }
+              onClick={restartGame}
             >
               <RotateCcw className="h-4 w-4" />
               <span className="hidden sm:inline">Restart</span>
@@ -182,12 +150,8 @@ function MinesweeperGamePage() {
             <MinesweeperBoard
               snapshot={snapshot}
               disabled={boardDisabled}
-              onReveal={(row, col) =>
-                sendTileCommand("tile.reveal", row, col)
-              }
-              onToggleFlag={(row, col) =>
-                sendTileCommand("tile.flag.toggle", row, col)
-              }
+              onReveal={revealTile}
+              onToggleFlag={toggleFlag}
             />
 
             <p className="mt-4 text-center text-xs text-muted-foreground">

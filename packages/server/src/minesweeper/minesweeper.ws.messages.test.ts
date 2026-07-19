@@ -9,7 +9,6 @@ describe("Minesweeper WebSocket messages", () => {
     expect(
       minesweeperClientMessageSchema.safeParse({
         type: "tile.reveal",
-        requestId: "request-1",
         payload: {row: 2, col: 3},
       }).success,
     ).toBe(true);
@@ -19,19 +18,36 @@ describe("Minesweeper WebSocket messages", () => {
     expect(
       minesweeperClientMessageSchema.safeParse({
         type: "tile.reveal",
-        requestId: "request-1",
         payload: {row: -1, col: 3},
       }).success,
     ).toBe(false);
+  });
+
+  test("rejects transport identifiers from browser commands", () => {
+    expect(
+      minesweeperClientMessageSchema.safeParse({
+        type: "tile.reveal",
+        requestId: "request-1",
+        connectionId: "connection-1",
+        payload: {row: 2, col: 3},
+      }).success,
+    ).toBe(false);
+  });
+
+  test("accepts workspace-scoped socket readiness", () => {
+    expect(
+      minesweeperServerMessageSchema.safeParse({
+        type: "socket.ready",
+        payload: {protocolVersion: 1},
+      }).success,
+    ).toBe(true);
   });
 
   test("accepts hidden and revealed tile snapshots", () => {
     expect(
       minesweeperServerMessageSchema.safeParse({
         type: "game.snapshot",
-        requestId: "request-1",
         payload: {
-          gameId: "game-1",
           revision: 4,
           status: "playing",
           elapsedSeconds: 12,
@@ -52,7 +68,6 @@ describe("Minesweeper WebSocket messages", () => {
       minesweeperServerMessageSchema.safeParse({
         type: "game.snapshot",
         payload: {
-          gameId: "game-1",
           revision: 0,
           status: "playing",
           elapsedSeconds: 0,

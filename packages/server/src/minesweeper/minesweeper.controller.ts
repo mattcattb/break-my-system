@@ -1,6 +1,8 @@
 import {zValidator} from "@hono/zod-validator";
 import {z} from "zod";
 import {createRouter} from "../common/hono";
+import {ServiceException} from "../common/errors";
+import {minesweeperClient} from "./minesweeper.client";
 import {
   closeMinesweeperWorkspace,
   createMinesweeperWorkspace,
@@ -35,13 +37,24 @@ export const minesweeperController =
     .post(
       "/workspaces",
       zValidator("json", createWorkspaceSchema),
-      (c) =>
-        c.json(
-          getMinesweeperWorkspaceSnapshot(
-            createMinesweeperWorkspace(c.req.valid("json")),
-          ),
-          201,
-        ),
+      async (c) => {
+        const config = c.req.valid("json");
+        const workspace = createMinesweeperWorkspace(config);
+        try {
+          const event = await minesweeperClient.createGame(workspace.id, config);
+          if (event.type === "error") {
+            throw new Error(event.payload.message);
+          }
+          return c.json(getMinesweeperWorkspaceSnapshot(workspace), 201);
+        } catch (error) {
+          closeMinesweeperWorkspace(workspace);
+          throw new ServiceException(
+            error instanceof Error
+              ? `Minesweeper runtime unavailable: ${error.message}`
+              : "Minesweeper runtime unavailable",
+          );
+        }
+      },
     )
     .use("/workspaces/:workspaceId", requireMinesweeperWorkspaceMW)
     .use("/workspaces/:workspaceId/*", requireMinesweeperWorkspaceMW)

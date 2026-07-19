@@ -1,4 +1,4 @@
-import {describe, expect, test} from "bun:test";
+import {afterAll, describe, expect, spyOn, test} from "bun:test";
 import {
   attachMinesweeperConnection,
   closeMinesweeperWorkspace,
@@ -8,6 +8,26 @@ import {
   requireMinesweeperWorkspace,
 } from "./minesweeper.workspace";
 import {minesweeperController} from "./minesweeper.controller";
+import {minesweeperClient} from "./minesweeper.client";
+
+const createGame = spyOn(minesweeperClient, "createGame").mockResolvedValue({
+  type: "game.snapshot",
+  audience: "game",
+  gameId: "test-game",
+  connectionId: "",
+  requestId: "test-request",
+  payload: {
+    revision: 0,
+    status: "playing",
+    elapsedSeconds: 0,
+    remainingMines: 10,
+    rows: 9,
+    cols: 9,
+    tiles: [],
+  },
+});
+
+afterAll(() => createGame.mockRestore());
 
 describe("Minesweeper workspaces", () => {
   test("stores API metadata without storing game state", () => {

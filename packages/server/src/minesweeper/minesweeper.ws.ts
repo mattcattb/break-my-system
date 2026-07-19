@@ -2,6 +2,10 @@ import {upgradeWebSocket} from "hono/bun";
 import type {Context} from "hono";
 import {createRouter} from "../common/hono";
 import {
+  minesweeperClient,
+  toMinesweeperServerMessage,
+} from "./minesweeper.client";
+import {
   minesweeperClientMessageSchema,
   type MinesweeperServerMessage,
 } from "./minesweeper.ws.messages";
@@ -17,14 +21,36 @@ import {
 
 type MinesweeperSocketSession = {
   kind: "minesweeper";
-  workspaceId: string;
   connectionId: string;
 };
 
+type MinesweeperSocket = {send(data: string): void};
+
+const workspaceSockets = new Map<
+  string,
+  Map<string, MinesweeperSocket>
+>();
+
 const sendMinesweeperMessage = (
-  socket: {send(data: string): void},
+  socket: MinesweeperSocket,
   message: MinesweeperServerMessage,
 ) => socket.send(JSON.stringify(message));
+
+const registerSocket = (
+  workspaceId: string,
+  connectionId: string,
+  socket: MinesweeperSocket,
+) => {
+  const sockets = workspaceSockets.get(workspaceId) ?? new Map();
+  sockets.set(connectionId, socket);
+  workspaceSockets.set(workspaceId, sockets);
+};
+
+const unregisterSocket = (workspaceId: string, connectionId: string) => {
+  const sockets = workspaceSockets.get(workspaceId);
+  sockets?.delete(connectionId);
+  if (sockets?.size === 0) workspaceSockets.delete(workspaceId);
+};
 
 const parseJsonMessage = (message: string) => {
   try {
@@ -41,23 +67,21 @@ export const minesweeperWsController = createRouter().get(
     const workspace = c.get("minesweeperWorkspace");
     const session: MinesweeperSocketSession = {
       kind: "minesweeper",
-      workspaceId: workspace.id,
       connectionId: crypto.randomUUID(),
     };
 
     return {
       onOpen: (_event, socket) => {
         attachMinesweeperConnection(workspace, session.connectionId);
+        registerSocket(workspace.id, session.connectionId, socket);
         sendMinesweeperMessage(socket, {
           type: "socket.ready",
           payload: {
-            gameId: session.workspaceId,
-            connectionId: session.connectionId,
             protocolVersion: 1,
           },
         });
       },
-      onMessage: (event, socket) => {
+      onMessage: async (event, socket) => {
         touchMinesweeperWorkspace(workspace);
         const result = minesweeperClientMessageSchema.safeParse(
           parseJsonMessage(event.data.toString()),
@@ -79,17 +103,39 @@ export const minesweeperWsController = createRouter().get(
           return;
         }
 
-        sendMinesweeperMessage(socket, {
-          type: "error",
-          requestId: result.data.requestId,
-          payload: {
-            code: "SYSTEM_UNAVAILABLE",
-            message: "The Minesweeper system transport is not connected yet",
-          },
-        });
+        try {
+          const runtimeEvent = await minesweeperClient.send(
+            workspace.id,
+            session.connectionId,
+            result.data,
+          );
+          const message = toMinesweeperServerMessage(runtimeEvent);
+          if (
+            runtimeEvent.type === "game.snapshot" &&
+            runtimeEvent.audience === "game"
+          ) {
+            for (const subscriber of workspaceSockets.get(workspace.id)?.values() ?? []) {
+              sendMinesweeperMessage(subscriber, message);
+            }
+          } else {
+            sendMinesweeperMessage(socket, message);
+          }
+        } catch (error) {
+          sendMinesweeperMessage(socket, {
+            type: "error",
+            payload: {
+              code: "SYSTEM_UNAVAILABLE",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "The Minesweeper runtime is unavailable",
+            },
+          });
+        }
       },
       onClose: () => {
         detachMinesweeperConnection(workspace, session.connectionId);
+        unregisterSocket(workspace.id, session.connectionId);
       },
     };
   }),
