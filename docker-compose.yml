@@ -58,6 +58,21 @@ services:
     ports:
       - "${PLC_PORT:-27474}:7474"
 
+  minesweeper:
+    build:
+      context: ./systems/minesweeper
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      MINESWEEPER_MODE: server
+      MINESWEEPER_PORT: 7575
+      MINESWEEPER_DATA_DIR: /data
+      MINESWEEPER_LEADERBOARD_PATH: ${MINESWEEPER_LEADERBOARD_PATH:-/data/leaderboard.csv}
+    volumes:
+      - minesweeper-data:/data
+    ports:
+      - "${MINESWEEPER_PORT:-27575}:7575"
+
   api:
     profiles: ["production"]
     build:
@@ -67,6 +82,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-break_my_system}
       REDIS_URL: redis://redis:6479
+      MINESWEEPER_HOST: minesweeper
+      MINESWEEPER_PORT: 7575
       WAD_HOST: 127.0.0.1
       WAD_PORT: 7373
       WAD_LISTEN_PORT: 7373
@@ -84,7 +101,10 @@ services:
         condition: service_healthy
       plc:
         condition: service_started
+      minesweeper:
+        condition: service_healthy
 
 volumes:
   postgres-data:
   redis-data:
+  minesweeper-data:

@@ -4,9 +4,9 @@ import { cn } from "../../lib/cn";
 
 const inputStyles = cva(
   [
-    "flex w-full rounded-sm border border-border bg-white px-2 py-1 text-sm text-foreground",
+    "flex w-full rounded-sm border border-border bg-background px-2.5 py-1 text-sm text-foreground",
     "placeholder:text-muted-foreground",
-    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+    "focus-visible:border-primary/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30",
     "disabled:cursor-not-allowed disabled:opacity-60",
   ],
   {

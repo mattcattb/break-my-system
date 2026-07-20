@@ -23,6 +23,8 @@ export const APP_ERROR_CODES = {
   PLC_WORKSPACE_EXPIRED: "PLC workspace expired",
   WAD_WORKSPACE_NOT_FOUND: "WAD workspace not found",
   WAD_WORKSPACE_EXPIRED: "WAD workspace expired",
+  MINESWEEPER_WORKSPACE_NOT_FOUND: "Minesweeper workspace not found",
+  MINESWEEPER_WORKSPACE_EXPIRED: "Minesweeper workspace expired",
   TOOL_NOT_FOUND: "Tool not found",
   UNKNOWN_SYSTEM: "Unknown system",
   WAD_INVALID: "Invalid WAD file",

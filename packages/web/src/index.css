@@ -22,8 +22,8 @@
   --color-warning: hsl(var(--warning));
   --color-danger: hsl(var(--danger));
 
-  --font-display: Arial, ui-sans-serif, system-ui, sans-serif;
-  --font-body: Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Arial Narrow", "Roboto Condensed", Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-body: Inter, Arial, ui-sans-serif, system-ui, sans-serif;
 
   --shadow-glow: none;
 }
@@ -77,22 +77,22 @@
 
   .dark {
     color-scheme: dark;
-    --background: 212 28% 10%;
-    --foreground: 210 32% 94%;
+    --background: 220 24% 7%;
+    --foreground: 40 16% 92%;
 
-    --surface: 214 22% 15% / 0.82;
-    --surface-elevated: 214 22% 18% / 0.94;
-    --muted: 215 18% 23%;
-    --muted-foreground: 214 14% 70%;
+    --surface: 220 20% 10% / 0.94;
+    --surface-elevated: 220 18% 14% / 0.98;
+    --muted: 220 14% 17%;
+    --muted-foreground: 218 10% 58%;
 
-    --border: 215 14% 28%;
-    --ring: 171 62% 50%;
-    --primary: 171 62% 50%;
-    --primary-foreground: 214 28% 9%;
-    --accent: 34 88% 60%;
-    --success: 151 50% 45%;
-    --warning: 34 88% 60%;
-    --danger: 2 70% 60%;
+    --border: 220 13% 24%;
+    --ring: 166 72% 48%;
+    --primary: 166 72% 48%;
+    --primary-foreground: 220 24% 6%;
+    --accent: 28 94% 62%;
+    --success: 151 58% 48%;
+    --warning: 34 94% 62%;
+    --danger: 2 78% 63%;
 
     --card: 214 22% 18%;
     --card-foreground: 210 32% 94%;
@@ -120,6 +120,10 @@
   body {
     @apply bg-background text-foreground font-body antialiased;
     min-height: 100vh;
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.12) 1px, transparent 1px);
+    background-size: 48px 48px;
   }
 
   h1,
@@ -132,6 +136,103 @@
   ::selection {
     background: hsl(var(--primary) / 0.2);
     color: hsl(var(--foreground));
+  }
+}
+
+@layer components {
+  .app-header {
+    @apply sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur-md sm:px-5;
+  }
+
+  .brand-lockup {
+    @apply flex items-center gap-3 text-foreground;
+  }
+
+  .brand-mark {
+    @apply grid size-7 grid-cols-3 items-end gap-0.5 border border-border bg-surface p-1;
+  }
+
+  .brand-mark span {
+    @apply bg-primary;
+  }
+
+  .brand-mark span:nth-child(1) { height: 45%; }
+  .brand-mark span:nth-child(2) { height: 100%; }
+  .brand-mark span:nth-child(3) { height: 68%; background: hsl(var(--accent)); }
+
+  .brand-name {
+    @apply block font-display text-[12px] font-bold tracking-[0.15em];
+  }
+
+  .brand-subtitle {
+    @apply hidden font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground sm:block;
+  }
+
+  .system-switcher {
+    @apply flex h-8 items-center gap-2 border border-border bg-surface px-2.5 font-mono text-[10px] uppercase tracking-wider hover:border-primary/50 hover:bg-muted;
+  }
+
+  .workspace-header {
+    @apply flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-border bg-surface/90 px-4 py-2.5 backdrop-blur-sm sm:px-5;
+  }
+
+  .system-glyph {
+    @apply flex size-9 items-center justify-center border border-primary/35 bg-primary/10 text-primary;
+  }
+
+  .icon-button {
+    @apply flex size-8 items-center justify-center border border-border bg-surface text-muted-foreground hover:border-primary/50 hover:text-foreground;
+  }
+
+  .status-dot {
+    @apply size-1.5 rounded-full;
+  }
+
+  .status-dot-active {
+    @apply bg-success shadow-[0_0_0_3px_hsl(var(--success)/0.12),0_0_12px_hsl(var(--success)/0.45)];
+  }
+
+  .status-dot-warn {
+    @apply bg-warning shadow-[0_0_0_3px_hsl(var(--warning)/0.1)];
+  }
+
+  .workshop-page {
+    @apply min-h-screen bg-background;
+  }
+
+  .page-container {
+    @apply mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-12;
+  }
+
+  .eyebrow {
+    @apply font-mono text-[10px] uppercase tracking-[0.2em] text-primary;
+  }
+
+  .display-title {
+    @apply font-display text-4xl font-bold uppercase leading-[0.92] tracking-[-0.035em] sm:text-6xl;
+  }
+
+  .panel {
+    @apply border border-border bg-surface;
+    box-shadow: 6px 6px 0 hsl(var(--background)), 7px 7px 0 hsl(var(--border) / 0.55);
+  }
+
+  .panel-heading {
+    @apply flex min-h-14 items-center justify-between gap-3 border-b border-border px-4 py-3;
+  }
+
+  .metric-cell {
+    @apply border-l-2 border-primary/60 bg-surface px-3 py-2;
+  }
+
+  .tool-grid {
+    @apply grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_22rem];
+  }
+
+  .terminal-surface {
+    background-color: #050807;
+    background-image: linear-gradient(hsl(146 70% 42% / 0.035) 1px, transparent 1px);
+    background-size: 100% 24px;
   }
 }
 

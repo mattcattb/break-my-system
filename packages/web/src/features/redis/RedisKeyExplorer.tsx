@@ -54,7 +54,7 @@ export function RedisKeyExplorer({
   };
 
   return (
-    <aside className="flex min-h-0 flex-col border border-border bg-surface">
+    <aside className="panel flex min-h-0 flex-col shadow-none">
       <div className="border-b border-border px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">

@@ -2,6 +2,8 @@ import {useEffect, useMemo, useState} from "react";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {createFileRoute, redirect, useNavigate} from "@tanstack/react-router";
 import {DetailedError, parseResponse} from "hono/client";
+import {Download, FileArchive, Trash2, Upload} from "lucide-react";
+import {WorkspaceHeader} from "../../components/common/SystemShell";
 import {Button} from "../../components/ui/button";
 import {Input} from "../../components/ui/input";
 import {appToast} from "../../lib/toast";
@@ -359,29 +361,23 @@ function WadWorkspacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-black p-4 font-mono text-sm text-green-300">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-green-950 pb-4">
-          <div>
-            <div className="text-green-500">$ wad --workspace {workspaceId}</div>
-            <p className="mt-1 text-xs text-green-800">Browse and modify a protected working copy.</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => void download("wad")} disabled={!selectedWadId}>
-              download WAD
-            </Button>
-            <Button variant="danger" onClick={() => close.mutate()} disabled={close.isPending}>
-              close workspace
-            </Button>
-          </div>
-        </header>
-
-        <label className="mb-4 block border border-dashed border-green-900 p-3 text-green-500">
-          <span className="mb-2 block text-xs uppercase text-green-800">Upload another WAD</span>
+    <div className="flex min-h-screen flex-col bg-background">
+      <WorkspaceHeader
+        system="WAD Filesystem"
+        workspaceId={workspaceId}
+        status={selectedWad ? (selectedWad.modified ? "modified" : "ready") : "waiting"}
+        backTo="/wad"
+        icon={<FileArchive className="size-4 text-amber-400" />}
+        meta={`${workspace.data?.wads.length ?? 0} archives · protected working copies`}
+        actions={<><Button variant="outline" size="sm" onClick={() => void download("wad")} disabled={!selectedWadId}><Download className="size-3.5" /> download</Button><Button variant="danger" size="sm" onClick={() => close.mutate()} disabled={close.isPending}><Trash2 className="size-3.5" /> close</Button></>}
+      />
+      <div className="flex-1 p-3">
+        <label className="mb-3 flex cursor-pointer items-center justify-between gap-4 border border-dashed border-border bg-surface px-4 py-3 hover:border-amber-400/50">
+          <span className="flex items-center gap-3"><span className="flex size-8 items-center justify-center border border-amber-400/30 bg-amber-400/10 text-amber-400"><Upload className="size-4" /></span><span><span className="block text-sm font-medium">Upload another WAD</span><span className="block text-xs text-muted-foreground">The original stays protected while you edit its working copy.</span></span></span>
           <input
             type="file"
             accept=".wad"
-            className="block w-full"
+            className="max-w-64 text-xs text-muted-foreground file:mr-3 file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-foreground"
             disabled={upload.isPending}
             onChange={(event) => {
               const file = event.target.files?.[0];
@@ -391,15 +387,15 @@ function WadWorkspacePage() {
         </label>
 
         {workspace.data?.wads.length ? (
-          <div className="grid min-h-[680px] grid-cols-1 border border-green-950 lg:grid-cols-[250px_minmax(0,1fr)_310px]">
-            <aside className="border-b border-green-950 lg:border-b-0 lg:border-r">
-              <div className="border-b border-green-950 p-2 text-xs uppercase text-green-800">Artifacts</div>
+          <div className="panel grid min-h-[680px] grid-cols-1 shadow-none lg:grid-cols-[250px_minmax(0,1fr)_310px]">
+            <aside className="border-b border-border lg:border-b-0 lg:border-r">
+              <div className="border-b border-border p-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Artifacts</div>
               {workspace.data.wads.map((wad) => (
                 <button
                   key={wad.id}
                   type="button"
                   className={`block w-full border-b border-green-950 p-3 text-left ${
-                    selectedWadId === wad.id ? "bg-green-950 text-green-100" : "text-green-500"
+                    selectedWadId === wad.id ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60"
                   }`}
                   onClick={() => {
                     setSelectedWadId(wad.id);
@@ -407,14 +403,14 @@ function WadWorkspacePage() {
                   }}
                 >
                   <div className="break-all">{wad.originalName}</div>
-                  <div className="mt-1 text-[10px] text-green-800">
+                  <div className="mt-1 font-mono text-[10px] text-muted-foreground">
                     {wad.magic} · {wad.descriptorCount} descriptors · {wad.sizeBytes} bytes
                   </div>
                   {wad.modified ? <div className="mt-1 text-[10px] text-amber-400">modified</div> : null}
                 </button>
               ))}
 
-              <div className="border-y border-green-950 p-2 text-xs uppercase text-green-800">Tree</div>
+              <div className="border-y border-border p-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Tree</div>
               {tree.isPending ? <div className="p-3 text-green-800">loading tree…</div> : null}
               {tree.isError ? <div className="p-3 text-red-400">{tree.error.message}</div> : null}
               {tree.data ? (
@@ -426,7 +422,7 @@ function WadWorkspacePage() {
               ) : null}
             </aside>
 
-            <main className="min-w-0 border-b border-green-950 p-4 lg:border-b-0 lg:border-r">
+            <main className="terminal-surface min-w-0 border-b border-border p-4 font-mono lg:border-b-0 lg:border-r">
               {selectedEntry ? (
                 <>
                   <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-green-950 pb-3">
@@ -454,7 +450,7 @@ function WadWorkspacePage() {
               )}
             </main>
 
-            <aside className="space-y-5 p-4">
+            <aside className="space-y-5 bg-surface p-4">
               <div>
                 <div className="mb-2 text-xs uppercase text-green-800">New namespace in {writableParent}</div>
                 <form
@@ -539,7 +535,7 @@ function WadWorkspacePage() {
             </aside>
           </div>
         ) : (
-          <div className="border border-green-950 p-8 text-center text-green-800">Upload a WAD to begin.</div>
+          <div className="panel p-12 text-center text-muted-foreground">Upload a WAD to begin exploring its filesystem.</div>
         )}
       </div>
     </div>

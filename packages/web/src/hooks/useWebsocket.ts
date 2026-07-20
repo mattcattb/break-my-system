@@ -5,7 +5,7 @@ import type {
 import {useCallback} from "react";
 import useReactWebSocket, {ReadyState} from "react-use-websocket";
 
-const statusByReadyState = {
+export const webSocketStatusByReadyState = {
   [ReadyState.CONNECTING]: "Connecting",
   [ReadyState.OPEN]: "Connected",
   [ReadyState.CLOSING]: "Closing",
@@ -27,7 +27,7 @@ const resolveWebSocketOrigin = () => {
   return `${protocol}//${window.location.host}`;
 };
 
-const createWebSocketUrl = (path = "/ws") =>
+export const createWebSocketUrl = (path = "/ws") =>
   new URL(path, resolveWebSocketOrigin()).toString();
 
 export function useRedisWebSocket(workspaceId?: string) {
@@ -61,7 +61,7 @@ export function useRedisWebSocket(workspaceId?: string) {
 
   return {
     readyState,
-    status: statusByReadyState[readyState],
+    status: webSocketStatusByReadyState[readyState],
     isConnected: readyState === ReadyState.OPEN,
     lastJsonMessage,
     sendMessage,

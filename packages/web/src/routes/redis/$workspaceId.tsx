@@ -373,6 +373,7 @@ function RedisWorkspacePage() {
     <div className="flex min-h-screen flex-col bg-background">
       <RedisStatusBar
         terminal={terminal}
+        workspaceId={workspaceId}
         keyCount={redisStatusQuery.data?.keyCount}
         supportedCommandCount={redisStatusQuery.data?.supportedCommandCount}
         isConnectionPending={changeConnection.isPending}
@@ -381,7 +382,7 @@ function RedisWorkspacePage() {
         onDisconnect={() => changeConnection.mutate("disconnect")}
         onReconnect={() => changeConnection.mutate("reconnect")}
       />
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="tool-grid">
         <RedisTerminal
           terminal={terminal}
           terminals={terminals}
