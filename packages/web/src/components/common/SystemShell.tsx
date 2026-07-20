@@ -1,5 +1,5 @@
 import {Link} from "@tanstack/react-router";
-import {ArrowLeft, Box, ChevronDown, Grid2X2, Radio} from "lucide-react";
+import {ArrowLeft, Box, ChevronDown, Grid2X2} from "lucide-react";
 import type {ReactNode} from "react";
 import {cn} from "../../lib/cn";
 
@@ -14,21 +14,15 @@ export function AppHeader({currentSystem}: {currentSystem?: string}) {
         </span>
         <span>
           <span className="brand-name">BREAK / MY SYSTEM</span>
-          <span className="brand-subtitle">Independent runtimes · one workshop</span>
         </span>
       </Link>
-      <div className="flex items-center gap-2">
-        <span className="hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:flex">
-          <Radio className="size-3 text-primary" /> control plane online
-        </span>
-        {currentSystem ? (
-          <Link to="/" className="system-switcher">
-            <Grid2X2 className="size-3.5" />
-            <span>{currentSystem}</span>
-            <ChevronDown className="size-3.5 text-muted-foreground" />
-          </Link>
-        ) : null}
-      </div>
+      {currentSystem ? (
+        <Link to="/" className="system-switcher">
+          <Grid2X2 className="size-3.5" />
+          <span>{currentSystem}</span>
+          <ChevronDown className="size-3.5 text-muted-foreground" />
+        </Link>
+      ) : null}
     </header>
   );
 }

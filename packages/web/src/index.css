@@ -30,34 +30,34 @@
 
 @layer base {
   :root {
-    color-scheme: light;
-    --background: 0 0% 86%;
-    --foreground: 0 0% 8%;
+    color-scheme: dark;
+    --background: 150 7% 5%;
+    --foreground: 50 9% 86%;
 
-    --surface: 0 0% 94%;
-    --surface-elevated: 0 0% 90%;
-    --muted: 0 0% 82%;
-    --muted-foreground: 0 0% 28%;
+    --surface: 150 6% 7%;
+    --surface-elevated: 150 5% 9%;
+    --muted: 150 4% 12%;
+    --muted-foreground: 120 4% 52%;
 
-    --border: 0 0% 45%;
-    --ring: 214 70% 35%;
-    --primary: 214 70% 35%;
-    --primary-foreground: 0 0% 100%;
-    --accent: 48 100% 40%;
-    --success: 120 45% 30%;
-    --warning: 39 100% 35%;
-    --danger: 0 70% 38%;
+    --border: 140 5% 18%;
+    --ring: 112 30% 52%;
+    --primary: 112 30% 52%;
+    --primary-foreground: 150 8% 5%;
+    --accent: 43 55% 55%;
+    --success: 112 36% 52%;
+    --warning: 43 64% 57%;
+    --danger: 2 55% 58%;
 
     --radius: 0.125rem;
 
-    --card: 0 0% 94%;
-    --card-foreground: 0 0% 8%;
-    --popover: 0 0% 94%;
-    --popover-foreground: 0 0% 8%;
-    --secondary: 0 0% 84%;
-    --secondary-foreground: 0 0% 8%;
-    --destructive: 0 70% 38%;
-    --input: 0 0% 45%;
+    --card: 150 6% 7%;
+    --card-foreground: 50 9% 86%;
+    --popover: 150 5% 9%;
+    --popover-foreground: 50 9% 86%;
+    --secondary: 150 4% 12%;
+    --secondary-foreground: 50 9% 86%;
+    --destructive: 2 55% 58%;
+    --input: 140 5% 22%;
 
     --chart-1: 171 70% 34%;
     --chart-2: 34 92% 54%;
@@ -65,52 +65,14 @@
     --chart-4: 151 45% 37%;
     --chart-5: 277 45% 46%;
 
-    --sidebar: 0 0% 100%;
-    --sidebar-foreground: 210 22% 15%;
-    --sidebar-primary: 171 70% 34%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 26% 92%;
-    --sidebar-accent-foreground: 210 22% 15%;
-    --sidebar-border: 212 20% 80%;
-    --sidebar-ring: 171 70% 34%;
-  }
-
-  .dark {
-    color-scheme: dark;
-    --background: 220 24% 7%;
-    --foreground: 40 16% 92%;
-
-    --surface: 220 20% 10% / 0.94;
-    --surface-elevated: 220 18% 14% / 0.98;
-    --muted: 220 14% 17%;
-    --muted-foreground: 218 10% 58%;
-
-    --border: 220 13% 24%;
-    --ring: 166 72% 48%;
-    --primary: 166 72% 48%;
-    --primary-foreground: 220 24% 6%;
-    --accent: 28 94% 62%;
-    --success: 151 58% 48%;
-    --warning: 34 94% 62%;
-    --danger: 2 78% 63%;
-
-    --card: 214 22% 18%;
-    --card-foreground: 210 32% 94%;
-    --popover: 214 22% 18%;
-    --popover-foreground: 210 32% 94%;
-    --secondary: 215 18% 23%;
-    --secondary-foreground: 210 32% 94%;
-    --destructive: 2 70% 60%;
-    --input: 215 14% 28%;
-
-    --sidebar: 214 22% 16%;
-    --sidebar-foreground: 210 32% 94%;
-    --sidebar-primary: 171 62% 50%;
-    --sidebar-primary-foreground: 214 28% 9%;
-    --sidebar-accent: 215 18% 23%;
-    --sidebar-accent-foreground: 210 32% 94%;
-    --sidebar-border: 215 14% 28%;
-    --sidebar-ring: 171 62% 50%;
+    --sidebar: 150 6% 7%;
+    --sidebar-foreground: 50 9% 86%;
+    --sidebar-primary: 112 30% 52%;
+    --sidebar-primary-foreground: 150 8% 5%;
+    --sidebar-accent: 150 4% 12%;
+    --sidebar-accent-foreground: 50 9% 86%;
+    --sidebar-border: 140 5% 18%;
+    --sidebar-ring: 112 30% 52%;
   }
 
   * {
@@ -120,10 +82,6 @@
   body {
     @apply bg-background text-foreground font-body antialiased;
     min-height: 100vh;
-    background-image:
-      linear-gradient(hsl(var(--border) / 0.12) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.12) 1px, transparent 1px);
-    background-size: 48px 48px;
   }
 
   h1,
@@ -141,7 +99,7 @@
 
 @layer components {
   .app-header {
-    @apply sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur-md sm:px-5;
+    @apply sticky top-0 z-40 flex h-12 items-center justify-between border-b border-border bg-background px-4 sm:px-5;
   }
 
   .brand-lockup {
@@ -149,7 +107,7 @@
   }
 
   .brand-mark {
-    @apply grid size-7 grid-cols-3 items-end gap-0.5 border border-border bg-surface p-1;
+    @apply grid size-6 grid-cols-3 items-end gap-0.5 border border-border bg-surface p-1;
   }
 
   .brand-mark span {
@@ -201,7 +159,7 @@
   }
 
   .page-container {
-    @apply mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-12;
+    @apply mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8;
   }
 
   .eyebrow {
@@ -214,7 +172,6 @@
 
   .panel {
     @apply border border-border bg-surface;
-    box-shadow: 6px 6px 0 hsl(var(--background)), 7px 7px 0 hsl(var(--border) / 0.55);
   }
 
   .panel-heading {

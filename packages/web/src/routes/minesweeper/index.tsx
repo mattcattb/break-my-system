@@ -61,65 +61,42 @@ function MinesweeperIndexPage() {
     <div className="workshop-page">
       <AppHeader currentSystem="Minesweeper" />
 
-      <main className="page-container grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,0.9fr)]">
-        <section>
-          <div className="system-glyph size-12 text-cyan-400">
-            <Bomb className="h-6 w-6" />
-          </div>
-          <p className="eyebrow mt-7">
-            System 04 / C++ realtime
-          </p>
-          <h1 className="display-title mt-3">
-            Every tile.<br />Server truth.
-          </h1>
-          <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground">
-            Create an isolated workspace, connect through the WebSocket gateway,
-            and let the C++ event loop own every reveal, flag, and finish.
-          </p>
+      <main className="page-container">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="system-glyph text-cyan-400"><Bomb className="size-4" /></div>
+          <div><p className="font-mono text-[10px] text-muted-foreground">MINE/C++ · WEBSOCKET · REALTIME</p><h1 className="mt-0.5 text-lg font-medium">Minesweeper</h1></div>
+        </div>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            {presets.map((preset) => {
-              const selected =
-                preset.rows === config.rows &&
-                preset.cols === config.cols &&
-                preset.mines === config.mines;
-              return (
-                <button
-                  key={preset.name}
-                  type="button"
-                  className={`border p-4 text-left transition-colors ${
-                    selected
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-surface hover:bg-muted"
-                  }`}
-                  onClick={() => setConfig(preset)}
-                >
-                  <span className="block text-sm font-medium">{preset.name}</span>
-                  <span className="mt-1 block font-mono text-xs text-muted-foreground">
-                    {preset.rows} × {preset.cols} · {preset.mines} mines
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="panel p-5 sm:p-6">
-          <div className="mb-5 flex items-center justify-between border-b border-border pb-4">
-            <div><p className="eyebrow">Workspace registry</p><h2 className="mt-1 text-lg font-semibold">Configure a new board</h2></div>
+        <section className="panel mx-auto max-w-3xl">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <h2 className="text-sm font-medium">New workspace</h2>
             <Button variant="outline" size="sm" onClick={() => setLeaderboardOpen(true)}><Trophy className="h-4 w-4 text-warning" />Leaderboard</Button>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            One API lease maps to one game in the C++ runtime.
-          </p>
 
           <form
-            className="mt-6 space-y-5"
+            className="space-y-5 p-4"
             onSubmit={(event) => {
               event.preventDefault();
               if (validConfig) createWorkspace.mutate();
             }}
           >
+            <div className="grid gap-2 sm:grid-cols-3">
+              {presets.map((preset) => {
+                const selected = preset.rows === config.rows && preset.cols === config.cols && preset.mines === config.mines;
+                return (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    className={`border px-3 py-2.5 text-left ${selected ? "border-primary bg-primary/10" : "border-border bg-background hover:bg-muted"}`}
+                    onClick={() => setConfig(preset)}
+                  >
+                    <span className="block text-xs font-medium">{preset.name}</span>
+                    <span className="mt-0.5 block font-mono text-[10px] text-muted-foreground">{preset.rows} × {preset.cols} · {preset.mines}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             <div className="grid grid-cols-3 gap-3">
               {(
                 [
@@ -158,23 +135,23 @@ function MinesweeperIndexPage() {
             </Button>
           </form>
 
-          <div className="mt-8 border-t border-border pt-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-medium">Recent workspaces</h3>
+          <div className="border-t border-border">
+            <div className="flex items-center justify-between px-4 py-3">
+              <h3 className="text-xs font-medium">Recent workspaces</h3>
               <span className="font-mono text-xs text-muted-foreground">
                 {workspaces.data?.workspaces.length ?? 0} active
               </span>
             </div>
 
             {workspaces.isLoading ? (
-              <p className="py-4 text-sm text-muted-foreground">Loading…</p>
+              <p className="border-t border-border p-4 text-sm text-muted-foreground">Loading…</p>
             ) : workspaces.data?.workspaces.length ? (
-              <div className="max-h-56 space-y-2 overflow-y-auto">
+              <div className="max-h-56 overflow-y-auto border-t border-border">
                 {workspaces.data.workspaces.map((workspace) => (
                   <button
                     key={workspace.id}
                     type="button"
-                    className="grid w-full grid-cols-[1fr_auto] gap-3 border border-border px-3 py-3 text-left hover:bg-muted"
+                    className="grid w-full grid-cols-[1fr_auto] gap-3 border-b border-border px-4 py-3 text-left last:border-b-0 hover:bg-muted"
                     onClick={() =>
                       navigate({
                         to: "/minesweeper/$gameId",
@@ -207,7 +184,7 @@ function MinesweeperIndexPage() {
                 ))}
               </div>
             ) : (
-              <p className="py-4 text-sm text-muted-foreground">
+              <p className="border-t border-border p-4 text-sm text-muted-foreground">
                 No active workspaces yet.
               </p>
             )}

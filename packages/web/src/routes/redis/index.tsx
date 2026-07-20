@@ -32,34 +32,17 @@ function RedisIndexPage() {
     <div className="workshop-page">
       <AppHeader currentSystem="Go Redis" />
       <main className="page-container">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(22rem,0.9fr)]">
-          <section className="flex flex-col justify-between">
-            <div>
-              <div className="system-glyph mb-7 size-12 text-red-400">
-                <Database className="size-6" />
-              </div>
-              <p className="eyebrow">System 01 / Go runtime</p>
-              <h1 className="display-title mt-3">Redis from<br />the wire up.</h1>
-              <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground">
-                Work directly against a Redis-compatible server written in Go.
-                Run RESP commands, manage live connections, and inspect the
-                keyspace without leaving the workspace.
-              </p>
-            </div>
-            <div className="mt-10 grid grid-cols-3 gap-2">
-              {[["Protocol", "RESP"], ["Transport", "TCP"], ["Instrument", "Terminal"]].map(([label, value]) => (
-                <div key={label} className="metric-cell">
-                  <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">{label}</div>
-                  <div className="mt-1 text-sm font-medium">{value}</div>
-                </div>
-              ))}
-            </div>
-          </section>
+        <div className="mb-6 flex items-center gap-3">
+          <div className="system-glyph text-red-400"><Database className="size-4" /></div>
+          <div>
+            <p className="font-mono text-[10px] text-muted-foreground">REDIS/GO · RESP · TCP</p>
+            <h1 className="mt-0.5 text-lg font-medium">Go Redis</h1>
+          </div>
+        </div>
 
-          <section className="panel">
+        <section className="panel mx-auto max-w-3xl">
             <PanelHeading
-              eyebrow="Workspace registry"
-              title="Open an isolated Redis session"
+              title="Workspaces"
               action={<span className="font-mono text-[10px] text-muted-foreground">{workspaces.length} ACTIVE</span>}
             />
             <div className="p-4">
@@ -72,9 +55,6 @@ function RedisIndexPage() {
                 <span className="flex items-center gap-2"><Plus className="size-4" />{createWorkspace.isPending ? "Provisioning…" : "New workspace"}</span>
                 <ArrowRight className="size-4" />
               </Button>
-              <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                Creates a private connection with terminal history and a key explorer.
-              </p>
             </div>
             <div className="border-t border-border">
               <div className="px-4 py-2 font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">Recent workspaces</div>
@@ -98,8 +78,7 @@ function RedisIndexPage() {
                 )) : <p className="p-5 text-sm text-muted-foreground">No active workspaces. Start at the top.</p>}
               </div>
             </div>
-          </section>
-        </div>
+        </section>
       </main>
     </div>
   );
