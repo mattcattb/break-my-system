@@ -10,3 +10,6 @@
 [submodule "systems/minesweeper"]
 	path = systems/minesweeper
 	url = https://github.com/mattcattb/Minesweeper.git
+[submodule "systems/go-torrent"]
+	path = systems/go-torrent
+	url = https://github.com/mattcattb/go-torrent.git
