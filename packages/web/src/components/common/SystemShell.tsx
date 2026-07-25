@@ -27,6 +27,46 @@ export function AppHeader({currentSystem}: {currentSystem?: string}) {
   );
 }
 
+export function DirectorySectionHeader({
+  title,
+  detail,
+}: {
+  title: string;
+  detail?: ReactNode;
+}) {
+  return (
+    <div className="flex min-h-9 items-center justify-between gap-3 border-b border-border px-3">
+      <h2 className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+        {title}
+      </h2>
+      {detail ? (
+        <span className="font-mono text-[9px] text-muted-foreground">
+          {detail}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+export function SystemIcon({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "grid size-9 shrink-0 place-items-center border border-border bg-surface-elevated",
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function WorkspaceHeader({
   system,
   workspaceId,

@@ -1,43 +1,21 @@
 import {z} from "zod";
 
 const DEFAULT_REDIS_URL = "redis://localhost:26379";
+const DEFAULT_DATABASE_URL =
+  "postgresql://postgres:postgres@localhost:15432/break_my_system";
 const DEFAULT_WAD_DATA_DIR = "/tmp/break-my-system/wads";
+const isDevelopment = process.env.NODE_ENV !== "production";
 
 const appEnvSchema = z.object({
-  MINESWEEPER_HOST: z.string().default("127.0.0.1"),
-  MINESWEEPER_PORT: z.preprocess((value) => {
-    if (typeof value === "string" && value.trim() !== "") {
-      return Number(value);
-    }
-    return value;
-  }, z.number().int().positive().default(27575)),
-  PLC_HOST: z.string().default("127.0.0.1"),
-  PLC_PORT: z.preprocess((value) => {
-    if (typeof value === "string" && value.trim() !== "") {
-      return Number(value);
-    }
-    return value;
-  }, z.number().int().positive().default(7474)),
+  MINESWEEPER_URL: z.string().url().optional(),
+  PLC_URL: z.string().url().optional(),
   DATABASE_URL: z.string().optional(),
-  REDIS_URL: z
-    .preprocess((value) => {
-      if (typeof value === "string" && value.trim() !== "") {
-        return value;
-      }
-      return DEFAULT_REDIS_URL;
-    }, z.string().url())
-    .optional(),
+  REDIS_URL: z.string().url().optional(),
 
   LOG_LEVEL: z.string().optional(),
   CORS_ORIGINS: z.string().optional(),
   WAD_DATA_DIR: z.string().default(DEFAULT_WAD_DATA_DIR),
-  WAD_HOST: z.string().default("127.0.0.1"),
-  WAD_PORT: z.preprocess((value) => {
-    if (typeof value === "string" && value.trim() !== "") {
-      return Number(value);
-    }
-    return value;
-  }, z.number().int().positive().default(27373)),
+  WAD_URL: z.string().url().optional(),
   WAD_MAX_UPLOAD_BYTES: z.preprocess(
     (value) => {
       if (typeof value === "string" && value.trim() !== "") {
@@ -61,4 +39,12 @@ const appEnvSchema = z.object({
     return value;
   }, z.number().int().positive().default(3000)),
 });
-export const appEnv = appEnvSchema.parse(process.env);
+export const appEnv = appEnvSchema.parse({
+  ...process.env,
+  DATABASE_URL:
+    process.env.DATABASE_URL?.trim() ||
+    (isDevelopment ? DEFAULT_DATABASE_URL : undefined),
+  REDIS_URL:
+    process.env.REDIS_URL?.trim() ||
+    (isDevelopment ? DEFAULT_REDIS_URL : undefined),
+});

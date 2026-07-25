@@ -15,9 +15,15 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/server/package.json packages/server/package.json
 COPY packages/web/package.json packages/web/package.json
+COPY systems/minesweeper/clients/typescript/package.json systems/minesweeper/clients/typescript/package.json
+COPY systems/wad-filesystem/clients/typescript/package.json systems/wad-filesystem/clients/typescript/package.json
 RUN bun install --frozen-lockfile
 
+COPY systems/minesweeper/clients/typescript systems/minesweeper/clients/typescript
+COPY systems/wad-filesystem/clients/typescript systems/wad-filesystem/clients/typescript
 COPY packages/server packages/server
+RUN bun run --filter @break-my-system/minesweeper-client build
+RUN bun run --filter @break-my-system/wad-client build
 WORKDIR /app/packages/server
 RUN bun build src/index.ts --outdir dist --target bun
 
@@ -37,8 +43,7 @@ COPY --from=app-builder /app/packages/server/dist ./dist
 
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV WAD_HOST=127.0.0.1
-ENV WAD_PORT=7373
+ENV WAD_URL=wad://127.0.0.1:7373
 ENV WAD_LISTEN_PORT=7373
 ENV WAD_DATA_DIR=/data/wads
 ENV WAD_MAX_WRITE_BYTES=26214400
@@ -48,7 +53,7 @@ EXPOSE 3000
 USER wadapp
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=5 \
-  CMD nc -z 127.0.0.1 "$WAD_PORT" \
+  CMD nc -z 127.0.0.1 "$WAD_LISTEN_PORT" \
     && bun -e "fetch('http://127.0.0.1:' + (process.env.PORT || '3000') + '/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"
 
 ENTRYPOINT ["/usr/bin/tini", "-g", "--"]
