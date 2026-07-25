@@ -63,10 +63,10 @@ function TreeEntry({
     <div>
       <button
         type="button"
-        className={`flex w-full items-center gap-2 border-l-2 px-2 py-1 text-left hover:bg-green-950/60 ${
+        className={`flex w-full items-center gap-2 border-l-2 px-2 py-1.5 text-left hover:bg-muted ${
           selectedPath === node.entry.path
-            ? "border-green-400 bg-green-950 text-green-100"
-            : "border-transparent text-green-500"
+            ? "border-amber-400 bg-amber-400/10 text-foreground"
+            : "border-transparent text-muted-foreground"
         }`}
         style={{paddingLeft: `${depth * 14 + 8}px`}}
         onClick={() => {
@@ -74,11 +74,11 @@ function TreeEntry({
           if (directory) setExpanded((value) => !value);
         }}
       >
-        <span className="w-3 text-green-800">
+        <span className="w-3 text-muted-foreground">
           {directory ? (expanded ? "−" : "+") : "·"}
         </span>
         <span>{node.entry.name}</span>
-        <span className="ml-auto text-[10px] uppercase text-green-900">
+        <span className="ml-auto text-[9px] uppercase text-muted-foreground">
           {node.entry.kind}
         </span>
       </button>
@@ -178,8 +178,12 @@ function ContentPreview({
     [imageUrl],
   );
 
-  if (content.isPending) return <div className="text-green-800">reading bytes…</div>;
-  if (content.isError) return <div className="text-red-400">{content.error.message}</div>;
+  if (content.isPending) {
+    return <div className="text-muted-foreground">Reading bytes…</div>;
+  }
+  if (content.isError) {
+    return <div className="text-danger">{content.error.message}</div>;
+  }
   if (!bytes) return null;
 
   let formattedText = text;
@@ -194,23 +198,23 @@ function ContentPreview({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs text-green-800">
+        <span className="text-xs text-muted-foreground">
           {imageType ?? (text !== null ? "UTF-8 text" : "binary")}
         </span>
         <Button size="sm" variant="ghost" onClick={() => setRaw((value) => !value)}>
-          {raw ? "preview" : "hex"}
+          {raw ? "Preview" : "Hex"}
         </Button>
       </div>
       {raw || (!imageType && text === null) ? (
-        <pre className="max-h-[460px] overflow-auto whitespace-pre font-mono text-xs leading-5 text-green-400">
+        <pre className="max-h-[460px] overflow-auto whitespace-pre font-mono text-xs leading-5 text-foreground/70">
           {formatHex(bytes)}
         </pre>
       ) : imageType && imageUrl ? (
-        <div className="flex min-h-64 items-center justify-center bg-zinc-950 p-4">
+        <div className="flex min-h-64 items-center justify-center border border-border bg-background p-4">
           <img src={imageUrl} alt={entry.name} className="max-h-[420px] max-w-full object-contain" />
         </div>
       ) : (
-        <pre className="max-h-[460px] overflow-auto whitespace-pre-wrap text-sm text-green-200">
+        <pre className="max-h-[460px] overflow-auto whitespace-pre-wrap text-sm text-foreground/80">
           {formattedText}
         </pre>
       )}
@@ -361,7 +365,7 @@ function WadWorkspacePage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="system-interface flex h-dvh min-h-[36rem] flex-col overflow-hidden bg-background">
       <WorkspaceHeader
         system="WAD Filesystem"
         workspaceId={workspaceId}
@@ -369,15 +373,18 @@ function WadWorkspacePage() {
         backTo="/wad"
         icon={<FileArchive className="size-4 text-amber-400" />}
         meta={`${workspace.data?.wads.length ?? 0} archives · protected working copies`}
-        actions={<><Button variant="outline" size="sm" onClick={() => void download("wad")} disabled={!selectedWadId}><Download className="size-3.5" /> download</Button><Button variant="danger" size="sm" onClick={() => close.mutate()} disabled={close.isPending}><Trash2 className="size-3.5" /> close</Button></>}
+        actions={<><Button variant="outline" size="sm" onClick={() => void download("wad")} disabled={!selectedWadId}><Download className="size-3.5" /> Download</Button><Button variant="danger" size="sm" onClick={() => close.mutate()} disabled={close.isPending}><Trash2 className="size-3.5" /> Close</Button></>}
       />
-      <div className="flex-1 p-3">
-        <label className="mb-3 flex cursor-pointer items-center justify-between gap-4 border border-dashed border-border bg-surface px-4 py-3 hover:border-amber-400/50">
-          <span className="flex items-center gap-3"><span className="flex size-8 items-center justify-center border border-amber-400/30 bg-amber-400/10 text-amber-400"><Upload className="size-4" /></span><span><span className="block text-sm font-medium">Upload another WAD</span><span className="block text-xs text-muted-foreground">The original stays protected while you edit its working copy.</span></span></span>
+      <div className="flex min-h-0 flex-1 flex-col p-3">
+        <label
+          className="flex shrink-0 cursor-pointer flex-wrap items-center justify-between gap-4 border border-dashed border-border bg-surface px-4 py-3 hover:border-amber-400/50"
+          aria-busy={upload.isPending}
+        >
+          <span className="flex items-center gap-3"><span className="flex size-8 items-center justify-center border border-amber-400/30 bg-amber-400/10 text-amber-400"><Upload className="size-4" /></span><span><span className="block text-sm font-medium">{workspace.data?.wads.length ? "Add WAD archive" : "Upload a WAD archive"}</span><span className="block text-xs text-muted-foreground">The original stays protected while you edit its working copy.</span></span></span>
           <input
             type="file"
             accept=".wad"
-            className="max-w-64 text-xs text-muted-foreground file:mr-3 file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-foreground"
+            className="max-w-72 text-xs text-muted-foreground file:mr-3 file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
             disabled={upload.isPending}
             onChange={(event) => {
               const file = event.target.files?.[0];
@@ -385,17 +392,25 @@ function WadWorkspacePage() {
             }}
           />
         </label>
+        {upload.isError ? (
+          <div
+            role="alert"
+            className="shrink-0 border-x border-b border-danger/30 bg-danger/10 px-4 py-2 text-xs text-danger"
+          >
+            The archive could not be loaded. {upload.error.message}
+          </div>
+        ) : null}
 
         {workspace.data?.wads.length ? (
-          <div className="panel grid min-h-[680px] grid-cols-1 shadow-none lg:grid-cols-[250px_minmax(0,1fr)_310px]">
-            <aside className="border-b border-border lg:border-b-0 lg:border-r">
-              <div className="border-b border-border p-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Artifacts</div>
+          <div className="mt-3 grid min-h-0 flex-1 grid-cols-1 overflow-hidden border border-border bg-surface lg:grid-cols-[250px_minmax(0,1fr)_310px]">
+            <aside className="min-h-0 overflow-auto border-b border-border lg:border-b-0 lg:border-r">
+              <div className="border-b border-border px-3 py-2 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Archives</div>
               {workspace.data.wads.map((wad) => (
                 <button
                   key={wad.id}
                   type="button"
-                  className={`block w-full border-b border-green-950 p-3 text-left ${
-                    selectedWadId === wad.id ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60"
+                  className={`block w-full border-b border-border p-3 text-left ${
+                    selectedWadId === wad.id ? "border-l-2 border-l-amber-400 bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60"
                   }`}
                   onClick={() => {
                     setSelectedWadId(wad.id);
@@ -406,13 +421,13 @@ function WadWorkspacePage() {
                   <div className="mt-1 font-mono text-[10px] text-muted-foreground">
                     {wad.magic} · {wad.descriptorCount} descriptors · {wad.sizeBytes} bytes
                   </div>
-                  {wad.modified ? <div className="mt-1 text-[10px] text-amber-400">modified</div> : null}
+                  {wad.modified ? <div className="mt-1 text-[10px] text-warning">modified</div> : null}
                 </button>
               ))}
 
-              <div className="border-y border-border p-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Tree</div>
-              {tree.isPending ? <div className="p-3 text-green-800">loading tree…</div> : null}
-              {tree.isError ? <div className="p-3 text-red-400">{tree.error.message}</div> : null}
+              <div className="border-y border-border px-3 py-2 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Filesystem</div>
+              {tree.isPending ? <div className="p-3 text-muted-foreground">Loading tree…</div> : null}
+              {tree.isError ? <div className="p-3 text-danger">{tree.error.message}</div> : null}
               {tree.data ? (
                 <TreeEntry
                   node={tree.data}
@@ -422,37 +437,37 @@ function WadWorkspacePage() {
               ) : null}
             </aside>
 
-            <main className="terminal-surface min-w-0 border-b border-border p-4 font-mono lg:border-b-0 lg:border-r">
+            <main className="terminal-surface min-h-0 min-w-0 overflow-auto border-b border-border p-4 font-mono lg:border-b-0 lg:border-r">
               {selectedEntry ? (
                 <>
-                  <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-green-950 pb-3">
+                  <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
                     <div>
-                      <div className="break-all text-lg text-green-100">{selectedEntry.path}</div>
-                      <div className="mt-1 text-xs uppercase text-green-800">
+                      <div className="break-all text-lg text-foreground">{selectedEntry.path}</div>
+                      <div className="mt-1 text-xs uppercase text-muted-foreground">
                         {selectedEntry.kind}
                         {selectedEntry.sizeBytes !== undefined ? ` · ${selectedEntry.sizeBytes} bytes` : ""}
                       </div>
                     </div>
                     {selectedEntry.kind === "content" ? (
                       <Button size="sm" variant="outline" onClick={() => void download("item")}>
-                        download item
+                        Download item
                       </Button>
                     ) : null}
                   </div>
                   {selectedEntry.kind === "content" && selectedWadId ? (
                     <ContentPreview workspaceId={workspaceId} wadId={selectedWadId} entry={selectedEntry} />
                   ) : (
-                    <div className="text-green-800">Select an item to inspect its contents.</div>
+                    <div className="text-muted-foreground">Select an item to inspect its contents.</div>
                   )}
                 </>
               ) : (
-                <div className="text-green-800">Select an entry from the WAD tree.</div>
+                <div className="text-muted-foreground">Select an entry from the WAD tree.</div>
               )}
             </main>
 
-            <aside className="space-y-5 bg-surface p-4">
+            <aside className="min-h-0 space-y-5 overflow-auto bg-surface p-4">
               <div>
-                <div className="mb-2 text-xs uppercase text-green-800">New namespace in {writableParent}</div>
+                <div className="mb-2 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">New namespace in {writableParent}</div>
                 <form
                   className="flex gap-2"
                   onSubmit={(event) => {
@@ -467,13 +482,13 @@ function WadWorkspacePage() {
                     placeholder="TX"
                     onChange={(event) => setNamespaceName(event.target.value)}
                   />
-                  <Button type="submit" disabled={!selectedWadId || createNamespace.isPending}>create</Button>
+                  <Button type="submit" disabled={!selectedWadId || createNamespace.isPending}>Create</Button>
                 </form>
-                <p className="mt-1 text-[10px] text-green-900">1–2 letters, numbers, or underscores.</p>
+                <p className="mt-1 text-[10px] text-muted-foreground">1–2 letters, numbers, or underscores.</p>
               </div>
 
               <form
-                className="space-y-2 border-t border-green-950 pt-4"
+                className="space-y-2 border-t border-border pt-4"
                 onSubmit={(event) => {
                   event.preventDefault();
                   if (!itemName) return;
@@ -487,7 +502,7 @@ function WadWorkspacePage() {
                   createItem.mutate({path: childPath(itemName.toUpperCase()), file});
                 }}
               >
-                <div className="text-xs uppercase text-green-800">New item in {writableParent}</div>
+                <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">New item in {writableParent}</div>
                 <Input
                   value={itemName}
                   maxLength={8}
@@ -496,17 +511,17 @@ function WadWorkspacePage() {
                   onChange={(event) => setItemName(event.target.value)}
                 />
                 <select
-                  className="h-8 w-full border border-green-900 bg-black px-2 text-green-400"
+                  className="h-8 w-full border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-primary"
                   value={itemMode}
                   onChange={(event) => setItemMode(event.target.value as typeof itemMode)}
                 >
-                  <option value="text">text</option>
-                  <option value="file">upload file</option>
-                  <option value="empty">empty</option>
+                  <option value="text">Text</option>
+                  <option value="file">Upload file</option>
+                  <option value="empty">Empty</option>
                 </select>
                 {itemMode === "text" ? (
                   <textarea
-                    className="min-h-32 w-full border border-green-900 bg-black p-2 text-green-200 outline-none focus:border-green-500"
+                    className="min-h-32 w-full resize-y border border-border bg-background p-2 text-sm text-foreground outline-none focus:border-primary"
                     value={itemText}
                     placeholder="Item contents"
                     onChange={(event) => setItemText(event.target.value)}
@@ -516,11 +531,11 @@ function WadWorkspacePage() {
                   <input type="file" className="block w-full text-xs" onChange={(event) => setItemFile(event.target.files?.[0])} />
                 ) : null}
                 <Button className="w-full" type="submit" disabled={!selectedWadId || createItem.isPending}>
-                  create item
+                  Create item
                 </Button>
               </form>
 
-              <div className="border-t border-green-950 pt-4">
+              <div className="border-t border-border pt-4">
                 <Button
                   className="w-full"
                   variant="danger"
@@ -529,13 +544,23 @@ function WadWorkspacePage() {
                     if (window.confirm("Discard every change to this working WAD?")) reset.mutate();
                   }}
                 >
-                  reset to original
+                  Reset to original
                 </Button>
               </div>
             </aside>
           </div>
         ) : (
-          <div className="panel p-12 text-center text-muted-foreground">Upload a WAD to begin exploring its filesystem.</div>
+          <div className="mt-3 grid min-h-0 flex-1 place-items-center border border-border bg-surface p-12 text-center">
+            <div>
+              <FileArchive className="mx-auto size-7 text-amber-400" />
+              <h2 className="mt-4 text-sm font-semibold text-foreground">
+                No archive loaded
+              </h2>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Upload a WAD above to inspect its filesystem.
+              </p>
+            </div>
+          </div>
         )}
       </div>
     </div>
