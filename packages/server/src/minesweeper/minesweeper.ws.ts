@@ -7,8 +7,8 @@ import {
 } from "./minesweeper.client";
 import {
   minesweeperClientMessageSchema,
-  type MinesweeperServerMessage,
 } from "./minesweeper.ws.messages";
+import type {MinesweeperServerMessage} from "./minesweeper.ws.types";
 import {
   attachMinesweeperConnection,
   detachMinesweeperConnection,
@@ -106,7 +106,6 @@ export const minesweeperWsController = createRouter().get(
         try {
           const runtimeEvent = await minesweeperClient.send(
             workspace.id,
-            session.connectionId,
             result.data,
           );
           const message = toMinesweeperServerMessage(runtimeEvent);

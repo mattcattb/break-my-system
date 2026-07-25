@@ -22,15 +22,15 @@ type MinesweeperBoardProps = {
 const numberColor = (value: number) =>
   [
     "",
-    "text-blue-400",
-    "text-emerald-400",
-    "text-red-400",
-    "text-violet-400",
-    "text-orange-400",
-    "text-cyan-400",
-    "text-white",
-    "text-zinc-400",
-  ][value] ?? "text-foreground";
+    "text-[#63e6be]",
+    "text-[#ffc857]",
+    "text-[#ff7085]",
+    "text-[#a99cff]",
+    "text-[#ff9f68]",
+    "text-[#6edff6]",
+    "text-[#edf7f5]",
+    "text-[#8296a6]",
+  ][value] ?? "text-[#edf7f5]";
 
 function HiddenMinesweeperTile({
   tile,
@@ -48,7 +48,7 @@ function HiddenMinesweeperTile({
   return (
     <button
       type="button"
-      className="flex h-8 w-8 items-center justify-center border-2 border-b-zinc-800 border-l-zinc-200 border-r-zinc-800 border-t-zinc-200 bg-zinc-400 text-sm text-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+      className="grid size-[var(--mine-cell-size)] select-none place-items-center rounded-[7px] border border-[#26394a] bg-[#203142] text-[#ffc857] shadow-[0_3px_0_#091018] transition-all hover:-translate-y-px hover:border-[#63e6be] hover:bg-[#273b4d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#63e6be]/60 disabled:cursor-not-allowed disabled:opacity-60"
       disabled={disabled}
       aria-label={label}
       onClick={() => onReveal(tile.row, tile.col)}
@@ -57,7 +57,9 @@ function HiddenMinesweeperTile({
         if (!disabled) onToggleFlag(tile.row, tile.col);
       }}
     >
-      {tile.flagged ? <Flag className="h-4 w-4" /> : null}
+      {tile.flagged ? (
+        <Flag className="size-[45%] fill-current" aria-hidden="true" />
+      ) : null}
     </button>
   );
 }
@@ -66,10 +68,10 @@ function RevealedMinesweeperTile({tile}: {tile: RevealedTile}) {
   if (tile.value === "mine") {
     return (
       <div
-        className="flex h-8 w-8 items-center justify-center bg-zinc-300 text-zinc-900"
+        className="grid size-[var(--mine-cell-size)] place-items-center rounded-[6px] bg-[#321923] text-[#ff7085]"
         aria-label={`Mine at row ${tile.row + 1}, column ${tile.col + 1}`}
       >
-        <Bomb className="h-4 w-4" />
+        <Bomb className="size-[45%]" />
       </div>
     );
   }
@@ -77,7 +79,7 @@ function RevealedMinesweeperTile({tile}: {tile: RevealedTile}) {
   return (
     <div
       className={cn(
-        "flex h-8 w-8 items-center justify-center bg-zinc-300 font-mono text-sm font-bold",
+        "grid size-[var(--mine-cell-size)] place-items-center rounded-[6px] bg-[#0c1721] font-mono text-[11px] font-bold",
         numberColor(tile.value),
       )}
       aria-label={`${tile.value} adjacent mines at row ${tile.row + 1}, column ${tile.col + 1}`}
@@ -119,21 +121,26 @@ export function MinesweeperBoard({
   onToggleFlag,
 }: MinesweeperBoardProps) {
   return (
-    <div className="max-w-full overflow-auto border-4 border-zinc-500 bg-zinc-500 shadow-2xl">
-      <div
-        className="grid gap-px bg-zinc-700"
-        style={{gridTemplateColumns: `repeat(${snapshot.cols}, 2rem)`}}
-        aria-label={`${snapshot.rows} by ${snapshot.cols} Minesweeper board`}
-      >
-        {snapshot.tiles.map((tile) => (
-          <MinesweeperTile
-            key={`${tile.row}-${tile.col}`}
-            tile={tile}
-            disabled={disabled}
-            onReveal={onReveal}
-            onToggleFlag={onToggleFlag}
-          />
-        ))}
+    <div className="max-w-full overflow-x-auto rounded-[1.75rem] border border-[#26394a] bg-[#111c28] p-3 shadow-[0_24px_60px_rgba(0,0,0,0.18)] sm:p-6">
+      <div className="mx-auto w-max rounded-2xl bg-[#091018] p-2.5 [--mine-cell-size:1.9rem] sm:p-3 sm:[--mine-cell-size:2.2rem]">
+        <div
+          className="grid gap-1"
+          style={{
+            gridTemplateColumns: `repeat(${snapshot.cols}, var(--mine-cell-size))`,
+          }}
+          role="grid"
+          aria-label={`${snapshot.rows} by ${snapshot.cols} Minesweeper board`}
+        >
+          {snapshot.tiles.map((tile) => (
+            <MinesweeperTile
+              key={`${tile.row}-${tile.col}`}
+              tile={tile}
+              disabled={disabled}
+              onReveal={onReveal}
+              onToggleFlag={onToggleFlag}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

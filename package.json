@@ -1,21 +1,19 @@
 {
   "name": "break-my-system",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*",
+    "systems/minesweeper/clients/typescript",
+    "systems/wad-filesystem/clients/typescript"
+  ],
   "scripts": {
-    "dev": "bun run dev:server & bun run dev:web",
-    "dev:server": "bun --env-file=.env run --filter @break-my-system/server dev",
-    "dev:web": "bun --env-file=.env run --filter @break-my-system/web dev",
-    "build": "bun --env-file=.env run --filter '*' build",
-    "test": "bun --env-file=.env run --filter @break-my-system/server test",
-    "db:generate": "bun --env-file=.env run --filter @break-my-system/server db:generate",
-    "db:migrate": "bun --env-file=.env run --filter @break-my-system/server db:migrate",
-    "db:studio": "bun --env-file=.env run --filter @break-my-system/server db:studio",
-    "wad:build": "make -C systems/wad-filesystem",
-    "wad:test": "make -C systems/wad-filesystem",
-    "wad:dev": "make -C systems/wad-filesystem && systems/wad-filesystem/wadsrv-bin",
-    "infra:up": "docker compose up -d --build",
-    "infra:down": "docker compose down"
+    "dev": "bun run --filter @break-my-system/minesweeper-client build && bun run --filter @break-my-system/wad-client build && bun run --workspaces --parallel --if-present dev",
+    "build": "bun run --workspaces --sequential --if-present build",
+    "typecheck": "bun run --workspaces --sequential --if-present typecheck",
+    "test": "bun run --workspaces --sequential --if-present test",
+    "check": "bun run typecheck && bun run test",
+    "systems:up": "docker compose up -d --build",
+    "systems:down": "docker compose down"
   },
   "dependencies": {
     "@types/bun": "^1.3.14"

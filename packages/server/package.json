@@ -11,13 +11,15 @@
     "dev": "bun --watch src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "make -C ../../systems/wad-filesystem && sh -c 'PORT=27373 WAD_DATA_DIR=/tmp/break-my-system/wads ../../systems/wad-filesystem/wadsrv-bin & pid=$!; trap \"kill $pid 2>/dev/null || true\" EXIT; sleep 0.1; bun test'",
+    "test": "bun run --filter @break-my-system/wad-client build && make -C ../../systems/wad-filesystem && sh -c 'WAD_LISTEN_PORT=27374 WAD_DATA_DIR=/tmp/break-my-system/wads ../../systems/wad-filesystem/wadsrv-bin & pid=$!; trap \"kill $pid 2>/dev/null || true\" EXIT; sleep 0.1; WAD_URL=wad://127.0.0.1:27374 bun test'",
     "start": "bun run dist/index.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@break-my-system/minesweeper-client": "workspace:*",
+    "@break-my-system/wad-client": "workspace:*",
     "@hono/zod-validator": "^0.4.0",
     "better-auth": "^1.2.0",
     "drizzle-orm": "^0.38.0",

@@ -2,19 +2,22 @@ import {queryOptions, useSuspenseQuery} from "@tanstack/react-query";
 import {createFileRoute, redirect, useNavigate} from "@tanstack/react-router";
 import {
   Bomb,
+  Clock3,
   Flag,
+  Info,
+  MousePointer2,
   RotateCcw,
-  Timer,
   Trophy,
 } from "lucide-react";
 import {DetailedError, parseResponse} from "hono/client";
 import {useEffect, useState} from "react";
 import {ResourceState} from "../../components/common/ResourceState";
-import {WorkspaceHeader} from "../../components/common/SystemShell";
 import {Button} from "../../components/ui/button";
 import {LeaderboardModal} from "../../features/minesweeper/LeaderboardModal";
 import {MinesweeperBoard} from "../../features/minesweeper/MinesweeperBoard";
+import {MinesweeperHeader} from "../../features/minesweeper/MinesweeperShell";
 import {useMinesweeperClient} from "../../features/minesweeper/useMinesweeperClient";
+import {cn} from "../../lib/cn";
 import {rpcClient} from "../../lib/rpc.client";
 import {appToast} from "../../lib/toast";
 
@@ -48,9 +51,9 @@ export const Route = createFileRoute("/minesweeper/$gameId")({
 
 function MinesweeperGamePending() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-6">
+    <main className="flex min-h-screen items-center justify-center bg-[#091018] p-6 text-[#edf7f5]">
       <ResourceState
-        className="w-full max-w-md"
+        className="w-full max-w-md rounded-2xl border-[#26394a] bg-[#111c28]"
         title="Loading game…"
         description="Retrieving the workspace before connecting to its runtime."
       />
@@ -62,9 +65,9 @@ function MinesweeperGameError() {
   const navigate = useNavigate();
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-6">
+    <main className="flex min-h-screen items-center justify-center bg-[#091018] p-6 text-[#edf7f5]">
       <ResourceState
-        className="w-full max-w-md"
+        className="w-full max-w-md rounded-2xl border-[#26394a] bg-[#111c28]"
         title="Game unavailable"
         description="The workspace could not be loaded. Return to Minesweeper and try again."
         actionLabel="Back to Minesweeper"
@@ -93,84 +96,189 @@ function MinesweeperGamePage() {
     if (lastError) appToast.error(lastError.message);
   }, [lastError]);
 
+  const gameStatus = snapshot?.status ?? (isConnected ? "connected" : status);
   const boardDisabled = snapshot?.status !== "playing" || !isConnected;
+  const elapsedSeconds = snapshot?.elapsedSeconds ?? 0;
+  const elapsed = `${String(Math.floor(elapsedSeconds / 60)).padStart(2, "0")}:${String(elapsedSeconds % 60).padStart(2, "0")}`;
+  const gameStatusTone =
+    gameStatus.toLowerCase() === "lost"
+      ? "bg-[#321923] text-[#ff7085]"
+      : "bg-[#163c39] text-[#63e6be]";
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <WorkspaceHeader
-        system="Minesweeper"
+    <div className="min-h-screen bg-[#091018] text-[#edf7f5]">
+      <MinesweeperHeader
         workspaceId={gameId}
-        status={isConnected ? snapshot?.status ?? "connected" : status}
-        backTo="/minesweeper"
-        icon={<Bomb className="size-4 text-cyan-400" />}
-        meta="authoritative C++ board"
-        actions={<>
-            <Button variant="outline" size="sm" onClick={() => setLeaderboardOpen(true)}>
-              <Trophy className="h-4 w-4 text-warning" />
-              <span className="hidden sm:inline">Leaderboard</span>
+        status={gameStatus}
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-xl border-[#26394a] bg-[#111c28] text-[#8296a6] hover:bg-[#172534] hover:text-[#edf7f5]"
+              aria-label="Open leaderboard"
+              onClick={() => setLeaderboardOpen(true)}
+            >
+              <Trophy className="size-3.5" />
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
+              className="rounded-xl border-[#26394a] bg-[#111c28] text-[#8296a6] hover:bg-[#172534] hover:text-[#edf7f5]"
               disabled={!isConnected}
+              aria-label="Restart game"
               onClick={restartGame}
             >
-              <RotateCcw className="h-4 w-4" />
-              <span className="hidden sm:inline">Restart</span>
+              <RotateCcw className="size-3.5" />
             </Button>
-          </>}
+          </>
+        }
       />
 
-      <div className="grid grid-cols-3 border-b border-border bg-surface text-sm sm:grid-cols-[repeat(3,10rem)] sm:justify-center">
-        <div className="flex items-center justify-center gap-2 border-r border-border px-4 py-3">
-          <Bomb className="h-4 w-4 text-danger" />
-          <span className="font-mono">
-            {snapshot?.remainingMines ?? workspace.mines}
-          </span>
-        </div>
-        <div className="flex items-center justify-center gap-2 border-r border-border px-4 py-3">
-          <Timer className="h-4 w-4 text-primary" />
-          <span className="font-mono">
-            {String(Math.floor((snapshot?.elapsedSeconds ?? 0) / 60)).padStart(
-              2,
-              "0",
-            )}
-            :{String((snapshot?.elapsedSeconds ?? 0) % 60).padStart(2, "0")}
-          </span>
-        </div>
-        <div className="flex items-center justify-center gap-2 px-4 py-3">
-          <Flag className="h-4 w-4 text-warning" />
-          <span className="capitalize">{snapshot?.status ?? "waiting"}</span>
+      <div className="border-b border-[#26394a] bg-[#0d151f]">
+        <div className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-4 py-3 sm:px-8">
+          <GameMetric
+            icon={<Bomb className="size-3.5 text-[#ff7085]" />}
+            label="Mines"
+            value={String(snapshot?.remainingMines ?? workspace.mines)}
+          />
+          <GameMetric
+            icon={<Clock3 className="size-3.5 text-[#63e6be]" />}
+            label="Time"
+            value={elapsed}
+          />
+          <GameMetric
+            icon={<Flag className="size-3.5 text-[#ffc857]" />}
+            label="Status"
+            value={gameStatus}
+          />
         </div>
       </div>
 
-      <main className="flex min-h-0 flex-1 flex-col items-center px-4 py-8">
-        {snapshot ? (
-          <>
+      <main className="mx-auto grid w-full max-w-6xl gap-5 px-3 py-6 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
+        <section className="min-w-0">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3 px-1">
+            <div>
+              <p className="font-mono text-[8px] uppercase tracking-[0.16em] text-[#8296a6]">
+                Workspace {gameId}
+              </p>
+              <h2 className="mt-1 text-lg font-semibold">
+                {workspace.rows} × {workspace.cols} field
+              </h2>
+            </div>
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-1 font-mono text-[8px] uppercase tracking-[0.12em]",
+                gameStatusTone,
+              )}
+            >
+              {gameStatus}
+            </span>
+          </div>
+
+          {snapshot ? (
             <MinesweeperBoard
               snapshot={snapshot}
               disabled={boardDisabled}
               onReveal={revealTile}
               onToggleFlag={toggleFlag}
             />
+          ) : (
+            <ResourceState
+              className="rounded-[1.75rem] border-[#26394a] bg-[#111c28]"
+              title={isConnected ? "Synchronizing board…" : "Connecting…"}
+              description="The board will appear after the runtime sends its authoritative snapshot."
+            />
+          )}
 
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              Left click to reveal · Right click to toggle a flag
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[10px] text-[#8296a6]">
+            <span className="flex items-center gap-1.5">
+              <MousePointer2 className="size-3" />
+              Reveal
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Flag className="size-3" />
+              Right click to flag
+            </span>
+          </div>
+        </section>
+
+        <aside className="grid content-start gap-3 sm:grid-cols-2 lg:grid-cols-1">
+          <div className="rounded-2xl border border-[#26394a] bg-[#111c28] p-4">
+            <p className="font-mono text-[8px] uppercase tracking-[0.15em] text-[#8296a6]">
+              Game detail
             </p>
-          </>
-        ) : (
-          <ResourceState
-            className="w-full max-w-md"
-            title={isConnected ? "Synchronizing board…" : "Connecting…"}
-            description="The board will appear after the server sends its authoritative snapshot."
-          />
-        )}
+            <dl className="mt-4 space-y-3 text-xs">
+              <DetailRow
+                label="Field"
+                value={`${workspace.rows} × ${workspace.cols}`}
+              />
+              <DetailRow label="Mines" value={String(workspace.mines)} />
+              <DetailRow
+                label="Remaining"
+                value={String(snapshot?.remainingMines ?? workspace.mines)}
+              />
+              <DetailRow label="Elapsed" value={elapsed} />
+            </dl>
+          </div>
+
+          <div className="rounded-2xl border border-[#26394a] bg-[#111c28] p-4">
+            <p className="font-mono text-[8px] uppercase tracking-[0.15em] text-[#8296a6]">
+              Runtime
+            </p>
+            <dl className="mt-4 space-y-3 text-xs">
+              <DetailRow
+                label="Connection"
+                value={isConnected ? "Connected" : status}
+              />
+              <DetailRow label="Authority" value="C++ board" />
+              <DetailRow label="Transport" value="WebSocket" />
+            </dl>
+          </div>
+
+          <div className="flex gap-2 rounded-2xl border border-[#26394a] bg-[#111c28] p-4 text-[10px] leading-4 text-[#8296a6] sm:col-span-2 lg:col-span-1">
+            <Info className="mt-0.5 size-3.5 shrink-0 text-[#63e6be]" />
+            The runtime owns the board. Every reveal and flag is confirmed by a
+            fresh snapshot.
+          </div>
+        </aside>
       </main>
 
       <LeaderboardModal
         open={leaderboardOpen}
         onOpenChange={setLeaderboardOpen}
       />
+    </div>
+  );
+}
+
+function GameMetric({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex min-w-max items-center gap-2 rounded-xl border border-[#26394a] bg-[#111c28] px-3 py-2">
+      {icon}
+      <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-[#8296a6]">
+        {label}
+      </span>
+      <strong className="font-mono text-[10px] font-medium capitalize">
+        {value}
+      </strong>
+    </div>
+  );
+}
+
+function DetailRow({label, value}: {label: string; value: string}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-[#8296a6]">{label}</dt>
+      <dd className="font-mono text-[10px]">{value}</dd>
     </div>
   );
 }

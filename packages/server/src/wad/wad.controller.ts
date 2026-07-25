@@ -6,6 +6,7 @@ import {
   createWadArtifact,
   createWadItem,
   createWadNamespace,
+  downloadWadArtifact,
   getWadArtifactSnapshot,
   listWadArtifacts,
   removeWadArtifact,
@@ -70,9 +71,9 @@ export const wadController = createRouter<WadWorkspaceEnv>()
     const content = await readWadContentRange(requireWadArtifact(c.get("wadWorkspace"), c.req.param("wadId")), query.path, query.offset, query.length);
     return c.body(content, 200, {"content-type": "application/octet-stream"});
   })
-  .get("/workspaces/:workspaceId/wads/:wadId/download", (c) => {
+  .get("/workspaces/:workspaceId/wads/:wadId/download", async (c) => {
     const artifact = requireWadArtifact(c.get("wadWorkspace"), c.req.param("wadId"));
-    return c.body(Bun.file(artifact.workingPath).stream(), 200, {"content-type": "application/octet-stream", "content-disposition": `attachment; filename="${attachmentName(artifact.originalName)}"`});
+    return c.body(await downloadWadArtifact(artifact), 200, {"content-type": "application/octet-stream", "content-disposition": `attachment; filename="${attachmentName(artifact.originalName)}"`});
   })
   .get("/workspaces/:workspaceId/wads/:wadId", (c) => c.json(getWadArtifactSnapshot(requireWadArtifact(c.get("wadWorkspace"), c.req.param("wadId"))), 200))
   .delete("/workspaces/:workspaceId/wads/:wadId", async (c) => {
