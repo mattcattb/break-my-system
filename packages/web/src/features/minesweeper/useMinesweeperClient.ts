@@ -1,9 +1,8 @@
-import {
-  minesweeperServerMessageSchema,
-  type MinesweeperClientMessage,
-  type MinesweeperServerMessage,
+import type {
+  MinesweeperClientMessage,
+  MinesweeperServerMessage,
 } from "@break-my-system/server";
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import useReactWebSocket, {ReadyState} from "react-use-websocket";
 import {
   createWebSocketUrl,
@@ -24,7 +23,7 @@ export const useMinesweeperClient = (workspaceId?: string) => {
   const [snapshot, setSnapshot] = useState<GameSnapshot>();
   const [lastError, setLastError] = useState<GameError>();
   const {readyState, sendJsonMessage, lastJsonMessage} =
-    useReactWebSocket<unknown>(
+    useReactWebSocket<MinesweeperServerMessage>(
       workspaceId
         ? createWebSocketUrl(
             `/ws/minesweeper/workspaces/${encodeURIComponent(workspaceId)}`,
@@ -44,11 +43,6 @@ export const useMinesweeperClient = (workspaceId?: string) => {
       },
       enabled,
     );
-
-  const lastMessage = useMemo(() => {
-    const result = minesweeperServerMessageSchema.safeParse(lastJsonMessage);
-    return result.success ? result.data : null;
-  }, [lastJsonMessage]);
 
   const sendCommand = useCallback(
     (message: MinesweeperClientMessage) => {
@@ -76,21 +70,23 @@ export const useMinesweeperClient = (workspaceId?: string) => {
   );
 
   useEffect(() => {
-    if (!lastMessage) return;
+    if (!lastJsonMessage) return;
 
-    if (lastMessage.type === "socket.ready") {
+    if (lastJsonMessage.type === "socket.ready") {
       setSnapshot(undefined);
       resyncGame();
       return;
     }
 
-    if (lastMessage.type === "game.snapshot") {
-      setSnapshot(lastMessage.payload);
+    if (lastJsonMessage.type === "game.snapshot") {
+      setSnapshot(lastJsonMessage.payload);
       return;
     }
 
-    if (lastMessage.type === "error") setLastError(lastMessage.payload);
-  }, [lastMessage, resyncGame]);
+    if (lastJsonMessage.type === "error") {
+      setLastError(lastJsonMessage.payload);
+    }
+  }, [lastJsonMessage, resyncGame]);
 
   return {
     status: webSocketStatusByReadyState[readyState],

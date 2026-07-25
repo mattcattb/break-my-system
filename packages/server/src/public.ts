@@ -16,14 +16,10 @@ export type {
   RedisClientMessage,
   RedisServerMessage,
 } from "./redis/redis.ws.messages";
-export {
-  minesweeperClientMessageSchema,
-  minesweeperServerMessageSchema,
-} from "./minesweeper/minesweeper.ws.messages";
 export type {
   MinesweeperClientMessage,
   MinesweeperServerMessage,
-} from "./minesweeper/minesweeper.ws.messages";
+} from "./minesweeper/minesweeper.ws.types";
 export type {MinesweeperWorkspaceSnapshot} from "./minesweeper/minesweeper.workspace";
 export type {PlcWorkspaceSnapshot} from "./plc/plc.workspace";
 export type {WadWorkspaceSnapshot} from "./wad/wad.workspace";

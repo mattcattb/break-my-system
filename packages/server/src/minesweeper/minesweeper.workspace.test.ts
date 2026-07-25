@@ -14,7 +14,6 @@ const createGame = spyOn(minesweeperClient, "createGame").mockResolvedValue({
   type: "game.snapshot",
   audience: "game",
   gameId: "test-game",
-  connectionId: "",
   requestId: "test-request",
   payload: {
     revision: 0,
