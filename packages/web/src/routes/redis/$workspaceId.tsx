@@ -8,6 +8,7 @@ import {
 import {createFileRoute, redirect} from "@tanstack/react-router";
 import {DetailedError, parseResponse} from "hono/client";
 import {useEffect, useRef, useState} from "react";
+import {RedisActivityDock} from "../../features/redis/RedisActivityDock";
 import {RedisKeyExplorer} from "../../features/redis/RedisKeyExplorer";
 import {RedisStatusBar} from "../../features/redis/RedisStatusBar";
 import {RedisTerminal} from "../../features/redis/RedisTerminal";
@@ -82,6 +83,7 @@ function RedisWorkspacePage() {
   const explorers = workspace.keyExplorers;
   const [selectedTerminalId, setSelectedTerminalId] = useState<string>();
   const [isTerminalFocused, setIsTerminalFocused] = useState(false);
+  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
   const [attachedTerminalIds, setAttachedTerminalIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -330,6 +332,12 @@ function RedisWorkspacePage() {
         pendingCommands.current.delete(message.requestId);
         setPendingCommandCount(pendingCommands.current.size);
       }
+      if (message.terminalId) {
+        queryClient.invalidateQueries({
+          queryKey: workspaceKeys.history(workspaceId, message.terminalId),
+        });
+        invalidateWorkspace();
+      }
       appToast.error(message.payload.message);
     }
   }, [lastJsonMessage, queryClient, workspaceId]);
@@ -369,45 +377,65 @@ function RedisWorkspacePage() {
     );
   }
 
+  const showInspector =
+    !isTerminalFocused && isInspectorOpen && Boolean(explorer);
+  const history = historyQuery.data ?? [];
+
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="redis-workspace flex h-dvh min-h-[32rem] flex-col overflow-hidden bg-background">
       <RedisStatusBar
         terminal={terminal}
         workspaceId={workspaceId}
         keyCount={redisStatusQuery.data?.keyCount}
         supportedCommandCount={redisStatusQuery.data?.supportedCommandCount}
         isConnectionPending={changeConnection.isPending}
+        isInspectorOpen={isInspectorOpen}
+        socketStatus={socketStatus}
         onConnect={() => changeConnection.mutate("connect")}
-        onCreateTerminal={() => createTerminal.mutate()}
         onDisconnect={() => changeConnection.mutate("disconnect")}
+        onInspectorChange={setIsInspectorOpen}
         onReconnect={() => changeConnection.mutate("reconnect")}
       />
-      <div className="tool-grid">
+      <main
+        className={`grid min-h-0 min-w-0 flex-1 grid-cols-1 ${
+          showInspector ? "lg:grid-cols-[minmax(0,1fr)_22rem]" : ""
+        }`}
+      >
         <RedisTerminal
           terminal={terminal}
           terminals={terminals}
-          history={historyQuery.data ?? []}
+          history={history}
           isFocused={isTerminalFocused}
+          isInspectorOpen={isInspectorOpen}
           isSending={pendingCommandCount > 0}
           socketStatus={socketStatus}
           onClose={(terminalId) => closeTerminal.mutate(terminalId)}
           onCreate={() => createTerminal.mutate()}
           onFocusChange={setIsTerminalFocused}
+          onInspectorChange={setIsInspectorOpen}
           onSelect={setSelectedTerminalId}
           onSendCommand={sendTerminalCommand}
         />
-        {!isTerminalFocused && explorer ? (
+        {showInspector && explorer ? (
           <RedisKeyExplorer
             explorer={explorer}
             inspection={inspectKey.data}
             isInspecting={inspectKey.isPending}
             isScanning={scanKeys.isPending}
             scan={scanKeys.data}
+            onClose={() => setIsInspectorOpen(false)}
             onInspect={(key) => inspectKey.mutate(key)}
             onScan={(pattern, cursor) => scanKeys.mutate({cursor, pattern})}
           />
         ) : null}
-      </div>
+      </main>
+      {!isTerminalFocused ? (
+        <RedisActivityDock
+          history={history}
+          socketStatus={socketStatus}
+          terminalStatus={terminal.status}
+        />
+      ) : null}
     </div>
   );
 }

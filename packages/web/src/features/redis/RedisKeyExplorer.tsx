@@ -1,6 +1,6 @@
 import type {RedisKeyExplorerSnapshot} from "@break-my-system/server";
 import type {InferResponseType} from "hono/client";
-import {KeyRound, RefreshCw, Search} from "lucide-react";
+import {KeyRound, RefreshCw, Search, X} from "lucide-react";
 import {useEffect, useState} from "react";
 import {Button} from "../../components/ui/button";
 import {Input} from "../../components/ui/input";
@@ -30,6 +30,7 @@ export function RedisKeyExplorer({
   isScanning,
   onInspect,
   onScan,
+  onClose,
   scan,
 }: {
   explorer: KeyExplorer;
@@ -38,6 +39,7 @@ export function RedisKeyExplorer({
   isScanning: boolean;
   onInspect: (key: string) => void;
   onScan: (pattern: string, cursor: string) => void;
+  onClose: () => void;
   scan?: KeyScan;
 }) {
   const [pattern, setPattern] = useState(explorer.pattern);
@@ -54,61 +56,77 @@ export function RedisKeyExplorer({
   };
 
   return (
-    <aside className="panel flex min-h-0 flex-col shadow-none">
-      <div className="border-b border-border px-4 py-3">
+    <aside className="flex min-h-0 flex-col border-t border-border bg-surface lg:border-l lg:border-t-0">
+      <div className="flex min-h-10 items-center border-b border-border px-3">
+        <span className="font-mono text-[10px] font-semibold text-foreground">
+          Inspector
+        </span>
+        <span className="ml-3 font-mono text-[9px] text-muted-foreground">
+          Keys {scan?.keys.length ?? 0}
+        </span>
+        <button
+          type="button"
+          className="ml-auto grid size-7 place-items-center text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label="Close key inspector"
+          onClick={onClose}
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
+      <div className="border-b border-border p-3">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <KeyRound className="size-4 text-muted-foreground" />
-            <h2 className="font-mono text-sm">Key explorer</h2>
-          </div>
-          <span className="font-mono text-[10px] text-muted-foreground">
-            {explorer.status}
-          </span>
+          <form
+            className="flex min-w-0 flex-1 gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!isScanning) onScan(pattern.trim() || "*", "0");
+            }}
+          >
+            <label className="flex min-w-0 flex-1 items-center gap-2 border border-border bg-background px-2.5 focus-within:border-primary/70">
+              <Search className="size-3 shrink-0 text-muted-foreground" />
+              <Input
+                value={pattern}
+                placeholder="Search keys"
+                aria-label="Search keys"
+                className="h-8 min-w-0 border-0 bg-transparent px-0 font-mono text-xs shadow-none focus-visible:ring-0"
+                onChange={(event) => setPattern(event.target.value)}
+              />
+            </label>
+            <Button
+              type="submit"
+              variant="secondary"
+              size="icon"
+              disabled={isScanning}
+              aria-label="Scan keys"
+            >
+              <RefreshCw className={cn("size-3.5", isScanning && "animate-spin")} />
+            </Button>
+          </form>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Scan incrementally, then inspect a key with typed Redis operations.
-        </p>
       </div>
 
-      <form
-        className="flex gap-2 border-b border-border p-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!isScanning) onScan(pattern.trim() || "*", "0");
-        }}
-      >
-        <Input
-          value={pattern}
-          placeholder="user:*"
-          className="font-mono"
-          onChange={(event) => setPattern(event.target.value)}
-        />
-        <Button
-          type="submit"
-          variant="secondary"
-          size="icon"
-          disabled={isScanning}
-          aria-label="Scan keys"
-        >
-          <RefreshCw className={cn("size-4", isScanning && "animate-spin")} />
-        </Button>
-      </form>
-
-      <div className="grid min-h-0 flex-1 grid-rows-[minmax(8rem,0.8fr)_minmax(12rem,1.2fr)]">
+      <div className="grid min-h-0 flex-1 grid-rows-[minmax(8rem,0.8fr)_minmax(12rem,1.2fr)] lg:grid-rows-[minmax(8rem,0.7fr)_minmax(12rem,1.3fr)]">
         <div className="min-h-0 overflow-auto border-b border-border">
           {scan?.keys.length ? (
-            <div className="divide-y divide-border">
+            <div>
               {scan.keys.map((key) => (
                 <button
                   key={key}
                   type="button"
                   className={cn(
-                    "flex w-full items-center gap-2 px-3 py-2 text-left font-mono text-xs hover:bg-muted",
-                    selectedKey === key && "bg-muted text-foreground",
+                    "flex w-full items-center gap-2 border-b border-border border-l-2 border-l-transparent px-3 py-2.5 text-left font-mono text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground",
+                    selectedKey === key &&
+                      "border-l-primary bg-primary/10 text-foreground",
                   )}
+                  aria-pressed={selectedKey === key}
                   onClick={() => inspect(key)}
                 >
-                  <Search className="size-3 shrink-0 text-muted-foreground" />
+                  <KeyRound
+                    className={cn(
+                      "size-3 shrink-0 text-muted-foreground",
+                      selectedKey === key && "text-primary",
+                    )}
+                  />
                   <span className="truncate">{key}</span>
                 </button>
               ))}
@@ -124,20 +142,18 @@ export function RedisKeyExplorer({
           {inspection ? (
             <div className="p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
-                <code className="break-all text-sm text-foreground">
+                <code className="break-all font-mono text-xs text-foreground">
                   {inspection.key}
                 </code>
-                <span className="border border-border bg-muted px-2 py-1 font-mono text-[11px] text-muted-foreground">
+                <span className="bg-muted px-2 py-1 font-mono text-[9px] uppercase text-muted-foreground">
                   {inspection.exists ? inspection.type : "missing"}
                 </span>
               </div>
-              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+              <dl className="grid grid-cols-[4rem_1fr] gap-y-2 font-mono text-[10px]">
                 <dt className="text-muted-foreground">Exists</dt>
-                <dd className="font-mono">
-                  {inspection.exists ? "yes" : "no"}
-                </dd>
+                <dd>{inspection.exists ? "yes" : "no"}</dd>
                 <dt className="text-muted-foreground">TTL</dt>
-                <dd className="font-mono">
+                <dd>
                   {inspection.ttlSeconds === -1
                     ? "persistent"
                     : inspection.ttlSeconds === -2
@@ -147,12 +163,12 @@ export function RedisKeyExplorer({
                 {inspection.size !== null ? (
                   <>
                     <dt className="text-muted-foreground">Size</dt>
-                    <dd className="font-mono">{inspection.size}</dd>
+                    <dd>{inspection.size}</dd>
                   </>
                 ) : null}
               </dl>
               {inspection.exists && inspection.value !== null ? (
-                <pre className="mt-4 overflow-auto whitespace-pre-wrap break-all border border-border bg-black p-3 font-mono text-xs text-green-200">
+                <pre className="mt-4 overflow-auto whitespace-pre-wrap break-all border border-border bg-background p-3 font-mono text-[10px] leading-5 text-foreground/80">
                   {formatValue(inspection.value)}
                 </pre>
               ) : null}
@@ -160,8 +176,8 @@ export function RedisKeyExplorer({
           ) : (
             <div className="flex h-full flex-col items-center justify-center px-6 py-8 text-center">
               <KeyRound className="mb-3 size-7 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">
-                Select a scanned key to inspect its type, TTL, value, or size.
+              <p className="text-xs text-muted-foreground">
+                Select a key to inspect it.
               </p>
               {isInspecting ? (
                 <p className="mt-2 font-mono text-xs text-muted-foreground">
