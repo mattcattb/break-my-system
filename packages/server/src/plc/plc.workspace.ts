@@ -5,6 +5,22 @@ import {PlcClient} from "./plc.client";
 const PLC_WORKSPACE_IDLE_MS = 10 * 60 * 1000;
 const PLC_WORKSPACE_TTL_MS = 60 * 60 * 1000;
 
+const getPlcEndpoint = () => {
+  const value =
+    appEnv.PLC_URL ??
+    (appEnv.NODE_ENV === "production" ? undefined : "plc://127.0.0.1:27474");
+
+  if (!value) {
+    throw new Error("PLC_URL is required in production");
+  }
+
+  const endpoint = new URL(value);
+  if (endpoint.protocol !== "plc:" || !endpoint.hostname || !endpoint.port) {
+    throw new Error("PLC_URL must be plc://host:port");
+  }
+  return endpoint;
+};
+
 export type PlcWorkspace = {
   id: string;
   createdAt: string;
@@ -32,9 +48,10 @@ export const getPlcWorkspaceSnapshot = (
 
 export const createPlcWorkspace = async () => {
   const createdAt = new Date().toISOString();
+  const endpoint = getPlcEndpoint();
   const plcClient = new PlcClient({
-    hostname: appEnv.PLC_HOST,
-    port: appEnv.PLC_PORT,
+    hostname: endpoint.hostname,
+    port: Number(endpoint.port),
   });
   try {
     await plcClient.connect();

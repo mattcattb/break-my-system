@@ -36,9 +36,11 @@ function PlcWorkspacePage() {
   const navigate = useNavigate();
   const workspace = useQuery(workspaceQuery(workspaceId));
   const [source, setSource] = useState(
-    'LET greeting = "Hello from the PLC";\nprint(greeting);\ngreeting;',
+    'FOR temperature IN range(68, 73) DO\n    IF temperature > 70 DO\n        print("cooling · " + temperature);\n    ELSE\n        print("stable · " + temperature);\n    END\nEND',
   );
-  const [output, setOutput] = useState("Run a program to start the PLC process.");
+  const [output, setOutput] = useState(
+    "Edit the example or run it as-is to inspect the evaluator output.",
+  );
   const [succeeded, setSucceeded] = useState<boolean>();
   const evaluate = useMutation({
     mutationFn: () =>
@@ -78,59 +80,60 @@ function PlcWorkspacePage() {
   const status = workspace.data?.status ?? "idle";
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="system-interface flex h-dvh min-h-[32rem] flex-col overflow-hidden bg-background">
       <WorkspaceHeader
         system="PLC Runtime"
         workspaceId={workspaceId}
         status={status}
         backTo="/plc"
         icon={<Braces className="size-4 text-violet-400" />}
-        meta="scope persists between runs"
+        meta="persistent evaluator scope"
         actions={
           <>
             <Button variant="outline" size="sm" disabled={reset.isPending} onClick={() => reset.mutate()}>
-              <RotateCcw className="size-3.5" /> reset scope
+              <RotateCcw className="size-3.5" /> Reset scope
             </Button>
             <Button variant="danger" size="sm" disabled={remove.isPending} onClick={() => remove.mutate()}>
-              <Trash2 className="size-3.5" /> close
+              <Trash2 className="size-3.5" /> Close
             </Button>
           </>
         }
       />
-      <main className="grid min-h-0 flex-1 gap-3 p-3 lg:grid-cols-2">
-        <section className="panel flex min-h-[32rem] flex-col shadow-none">
+      <main className="grid min-h-0 flex-1 grid-rows-2 gap-px bg-border lg:grid-cols-2 lg:grid-rows-1">
+        <section className="flex min-h-0 flex-col bg-surface">
           <PanelHeading
-            eyebrow="Source instrument"
+            eyebrow="Program"
             title="source.plc"
             action={<span className="font-mono text-[10px] text-muted-foreground">{source.split("\n").length} LINES</span>}
           />
-          <div className="min-h-0 flex-1 p-3">
+          <div className="min-h-0 flex-1 bg-background p-3">
             <Textarea
               id="plc-source"
               value={source}
               spellCheck={false}
-              className="terminal-surface h-full min-h-96 resize-none border-violet-500/20 p-4 font-mono text-sm leading-6 text-violet-100"
+              aria-label="PLC source"
+              className="terminal-surface h-full min-h-0 resize-none border-border p-4 font-mono text-sm leading-6 text-foreground"
               onChange={(event) => setSource(event.target.value)}
             />
           </div>
           <div className="flex items-center justify-between border-t border-border px-3 py-2.5">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Persistent evaluator scope</span>
+            <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">LET / DEF persist until reset</span>
             <Button disabled={evaluate.isPending || !source.trim()} onClick={() => evaluate.mutate()}>
-              <Play className="size-3.5" /> {evaluate.isPending ? "running…" : "run program"}
+              <Play className="size-3.5" /> {evaluate.isPending ? "Running…" : "Run program"}
             </Button>
           </div>
         </section>
-        <section className="panel flex min-h-[32rem] flex-col shadow-none">
+        <section className="flex min-h-0 flex-col bg-surface">
           <PanelHeading
-            eyebrow="Runtime channel"
-            title="Output"
+            eyebrow="Runtime"
+            title="Program output"
             action={<span className={`font-mono text-[10px] uppercase ${succeeded === false ? "text-danger" : succeeded ? "text-success" : "text-muted-foreground"}`}>{succeeded === undefined ? "WAITING" : succeeded ? "OK" : "ERROR"}</span>}
           />
-          <pre className={`terminal-surface min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-4 font-mono text-sm leading-6 ${succeeded === false ? "text-red-300" : "text-green-200"}`}>
+          <pre className={`terminal-surface min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-4 font-mono text-sm leading-6 ${succeeded === false ? "text-danger" : "text-foreground/80"}`}>
             {output}
           </pre>
-          <div className="flex items-center gap-2 border-t border-border px-3 py-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            <TerminalSquare className="size-3.5" /> analyzer / evaluator / stdout
+          <div className="flex items-center gap-2 border-t border-border px-3 py-2.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+            <TerminalSquare className="size-3.5" /> Analyzer · evaluator · stdout
           </div>
         </section>
       </main>
