@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WadIndexRouteImport } from './routes/wad/index'
+import { Route as TorrentIndexRouteImport } from './routes/torrent/index'
 import { Route as RedisIndexRouteImport } from './routes/redis/index'
 import { Route as PlcIndexRouteImport } from './routes/plc/index'
 import { Route as MinesweeperIndexRouteImport } from './routes/minesweeper/index'
@@ -27,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const WadIndexRoute = WadIndexRouteImport.update({
   id: '/wad/',
   path: '/wad/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TorrentIndexRoute = TorrentIndexRouteImport.update({
+  id: '/torrent/',
+  path: '/torrent/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RedisIndexRoute = RedisIndexRouteImport.update({
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/minesweeper/': typeof MinesweeperIndexRoute
   '/plc/': typeof PlcIndexRoute
   '/redis/': typeof RedisIndexRoute
+  '/torrent/': typeof TorrentIndexRoute
   '/wad/': typeof WadIndexRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/minesweeper': typeof MinesweeperIndexRoute
   '/plc': typeof PlcIndexRoute
   '/redis': typeof RedisIndexRoute
+  '/torrent': typeof TorrentIndexRoute
   '/wad': typeof WadIndexRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/minesweeper/': typeof MinesweeperIndexRoute
   '/plc/': typeof PlcIndexRoute
   '/redis/': typeof RedisIndexRoute
+  '/torrent/': typeof TorrentIndexRoute
   '/wad/': typeof WadIndexRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/minesweeper/'
     | '/plc/'
     | '/redis/'
+    | '/torrent/'
     | '/wad/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/minesweeper'
     | '/plc'
     | '/redis'
+    | '/torrent'
     | '/wad'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/minesweeper/'
     | '/plc/'
     | '/redis/'
+    | '/torrent/'
     | '/wad/'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +156,7 @@ export interface RootRouteChildren {
   MinesweeperIndexRoute: typeof MinesweeperIndexRoute
   PlcIndexRoute: typeof PlcIndexRoute
   RedisIndexRoute: typeof RedisIndexRoute
+  TorrentIndexRoute: typeof TorrentIndexRoute
   WadIndexRoute: typeof WadIndexRoute
 }
 
@@ -161,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/wad'
       fullPath: '/wad/'
       preLoaderRoute: typeof WadIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/torrent/': {
+      id: '/torrent/'
+      path: '/torrent'
+      fullPath: '/torrent/'
+      preLoaderRoute: typeof TorrentIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/redis/': {
@@ -224,6 +244,7 @@ const rootRouteChildren: RootRouteChildren = {
   MinesweeperIndexRoute: MinesweeperIndexRoute,
   PlcIndexRoute: PlcIndexRoute,
   RedisIndexRoute: RedisIndexRoute,
+  TorrentIndexRoute: TorrentIndexRoute,
   WadIndexRoute: WadIndexRoute,
 }
 export const routeTree = rootRouteImport
