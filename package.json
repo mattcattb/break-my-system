@@ -2,9 +2,7 @@
   "name": "break-my-system",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "systems/minesweeper/clients/typescript",
-    "systems/wad-filesystem/clients/typescript"
+    "packages/*"
   ],
   "scripts": {
     "dev": "bun run --filter @break-my-system/minesweeper-client build && bun run --filter @break-my-system/wad-client build && bun run --workspaces --parallel --if-present dev",
