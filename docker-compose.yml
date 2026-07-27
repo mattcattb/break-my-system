@@ -52,7 +52,7 @@ services:
 
 
   torrent-tracker:
-    image: go-torrent-tracker:local
+    image: ${TORRENT_TRACKER_IMAGE:-mattbou12/go-torrent-tracker:0.2.0}
     build:
       context: ./systems/go-torrent
       dockerfile: Dockerfile.tracker
@@ -78,7 +78,7 @@ services:
       retries: 10
 
   torrent-seeder:
-    image: go-torrent-client:local
+    image: ${TORRENT_CLIENT_IMAGE:-mattbou12/go-torrent:0.2.0}
     build:
       context: ./systems/go-torrent
       dockerfile: Dockerfile.torrent
@@ -108,7 +108,7 @@ services:
       retries: 10
 
   torrent-learner-1:
-    image: go-torrent-client:local
+    image: ${TORRENT_CLIENT_IMAGE:-mattbou12/go-torrent:0.2.0}
     pull_policy: never
     restart: unless-stopped
     command:
@@ -142,7 +142,7 @@ services:
       retries: 20
 
   torrent-learner-2:
-    image: go-torrent-client:local
+    image: ${TORRENT_CLIENT_IMAGE:-mattbou12/go-torrent:0.2.0}
     pull_policy: never
     restart: unless-stopped
     command:

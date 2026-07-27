@@ -20,9 +20,14 @@ const trackerSnapshot = {
   ],
 };
 
-const clientSnapshot = (peerId: string, downloadedBytes: number) => ({
+const clientSnapshot = (
+  peerId: string,
+  downloadedBytes: number,
+  state: "downloading" | "seeding" | "paused" = "seeding",
+) => ({
   peerId,
   torrent: {
+    state,
     infoHash,
     name: "lesson-payload-v1.bin",
     tracker: "http://tracker:6969/announce",
@@ -58,7 +63,13 @@ describe("torrent lab observation route", () => {
             ? 1
             : 2;
         return Promise.resolve(
-          jsonResponse(clientSnapshot(peerIds[peerIndex], peerIndex === 0 ? 0 : 5_242_880)),
+          jsonResponse(
+            clientSnapshot(
+              peerIds[peerIndex],
+              peerIndex === 0 ? 0 : 5_242_880,
+              peerIndex === 2 ? "paused" : "seeding",
+            ),
+          ),
         );
       }) as typeof fetch,
     );
@@ -76,9 +87,24 @@ describe("torrent lab observation route", () => {
           snapshot: {swarms: [{infoHash}]},
         },
         clients: [
-          {id: "seeder", role: "seeder", status: "online"},
-          {id: "learner-1", role: "learner", status: "online"},
-          {id: "learner-2", role: "learner", status: "online"},
+          {
+            id: "seeder",
+            role: "seeder",
+            status: "online",
+            snapshot: {torrent: {state: "seeding"}},
+          },
+          {
+            id: "learner-1",
+            role: "learner",
+            status: "online",
+            snapshot: {torrent: {state: "seeding"}},
+          },
+          {
+            id: "learner-2",
+            role: "learner",
+            status: "online",
+            snapshot: {torrent: {state: "paused"}},
+          },
         ],
       });
     } finally {

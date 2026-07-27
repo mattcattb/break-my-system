@@ -21,6 +21,7 @@ const trackerSnapshotSchema = z.object({
 const torrentSnapshotSchema = z.object({
   peerId: z.string().regex(/^[0-9a-f]{40}$/),
   torrent: z.object({
+    state: z.enum(["downloading", "seeding", "paused"]),
     infoHash: z.string().regex(/^[0-9a-f]{40}$/),
     name: z.string().min(1),
     tracker: z.string().url(),
