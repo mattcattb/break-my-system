@@ -95,13 +95,13 @@ function MinesweeperIndexPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#091018] text-[#edf7f5]">
+    <div className="system-interface min-h-screen bg-background text-foreground">
       <MinesweeperHeader status="Ready" />
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-12">
+      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-[#63e6be]">
+            <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-[#73daca]">
               New game
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em]">
@@ -110,24 +110,23 @@ function MinesweeperIndexPage() {
           </div>
           <Button
             variant="outline"
-            className="rounded-xl border-[#26394a] bg-[#111c28] text-[#edf7f5] hover:bg-[#172534]"
             onClick={() => setLeaderboardOpen(true)}
           >
-            <Trophy className="size-3.5 text-[#ffc857]" />
+            <Trophy className="size-3.5 text-[#e0af68]" />
             Leaderboard
           </Button>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem]">
           <form
-            className="rounded-[1.75rem] border border-[#26394a] bg-[#111c28] p-5 sm:p-7"
+            className="border border-border bg-surface p-5 sm:p-7"
             onSubmit={(event) => {
               event.preventDefault();
               if (validConfig) createWorkspace.mutate();
             }}
           >
             <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#8296a6]">
+              <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">
                 Difficulty
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -139,9 +138,9 @@ function MinesweeperIndexPage() {
                       key={preset.name}
                       type="button"
                       className={cn(
-                        "relative min-h-36 rounded-2xl border border-[#26394a] bg-[#0d151f] p-4 text-left transition-all hover:-translate-y-0.5 hover:bg-[#172534]",
+                        "relative min-h-36 border border-border bg-background p-4 text-left transition-colors hover:bg-muted",
                         selected &&
-                          "border-[#63e6be] bg-[#172534] shadow-[0_12px_35px_rgba(0,0,0,0.18)]",
+                          "border-[#73daca] bg-muted",
                       )}
                       aria-pressed={selected}
                       onClick={() =>
@@ -153,9 +152,9 @@ function MinesweeperIndexPage() {
                       }
                     >
                       <span className="flex items-start justify-between">
-                        <Grid3X3 className="size-4 text-[#63e6be]" />
+                        <Grid3X3 className="size-4 text-[#73daca]" />
                         {selected ? (
-                          <span className="grid size-5 place-items-center rounded-full bg-[#63e6be] text-[#091018]">
+                          <span className="grid size-5 place-items-center rounded-full bg-[#73daca] text-background">
                             <Check className="size-3" />
                           </span>
                         ) : null}
@@ -163,10 +162,10 @@ function MinesweeperIndexPage() {
                       <span className="mt-7 block text-sm font-semibold">
                         {preset.name}
                       </span>
-                      <span className="mt-1 block font-mono text-[9px] text-[#8296a6]">
+                      <span className="mt-1 block font-mono text-[9px] text-muted-foreground">
                         {preset.rows} × {preset.cols} · {preset.mines} mines
                       </span>
-                      <span className="mt-2 block text-[10px] text-[#8296a6]">
+                      <span className="mt-2 block text-[10px] text-muted-foreground">
                         {preset.detail}
                       </span>
                     </button>
@@ -175,13 +174,13 @@ function MinesweeperIndexPage() {
               </div>
             </div>
 
-            <div className="mt-7 border-t border-[#26394a] pt-6">
+            <div className="mt-7 border-t border-border pt-6">
               <div className="flex items-center justify-between gap-4">
-                <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#8296a6]">
+                <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">
                   Custom field
                 </p>
                 {!selectedPreset ? (
-                  <span className="rounded-full bg-[#163c39] px-2 py-1 font-mono text-[8px] uppercase tracking-[0.1em] text-[#63e6be]">
+                  <span className="rounded-full bg-[#73daca]/10 px-2 py-1 font-mono text-[8px] uppercase tracking-[0.1em] text-[#73daca]">
                     Custom
                   </span>
                 ) : null}
@@ -197,7 +196,7 @@ function MinesweeperIndexPage() {
                   <div key={key} className="space-y-2">
                     <Label
                       htmlFor={`minesweeper-${key}`}
-                      className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#8296a6]"
+                      className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground"
                     >
                       {label}
                     </Label>
@@ -209,7 +208,7 @@ function MinesweeperIndexPage() {
                         key === "mines" ? config.rows * config.cols - 1 : 100
                       }
                       value={config[key]}
-                      className="h-11 rounded-xl border-[#26394a] bg-[#0d151f] px-3 text-[#edf7f5] focus-visible:border-[#63e6be]"
+                      className="h-11 border-border bg-background px-3 text-foreground focus-visible:border-[#73daca]"
                       onChange={(event) =>
                         setConfig((current) => ({
                           ...current,
@@ -223,12 +222,12 @@ function MinesweeperIndexPage() {
             </div>
           </form>
 
-          <aside className="self-start rounded-[1.75rem] border border-[#26394a] bg-[#111c28] p-5">
+          <aside className="self-start border border-border bg-surface p-5">
             <div className="flex items-center justify-between gap-3">
-              <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#8296a6]">
+              <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">
                 Field preview
               </p>
-              <span className="rounded-full bg-[#163c39] px-2 py-1 font-mono text-[8px] text-[#63e6be]">
+              <span className="rounded-full bg-[#73daca]/10 px-2 py-1 font-mono text-[8px] text-[#73daca]">
                 {Number.isFinite(density) ? density : 0}% density
               </span>
             </div>
@@ -239,7 +238,7 @@ function MinesweeperIndexPage() {
             </div>
             <Button
               size="lg"
-              className="mt-4 h-11 w-full rounded-xl border-[#63e6be] bg-[#63e6be] font-semibold text-[#091018] hover:brightness-95"
+              className="mt-4 h-11 w-full"
               disabled={!validConfig || createWorkspace.isPending}
               onClick={() => {
                 if (validConfig) createWorkspace.mutate();
@@ -251,28 +250,28 @@ function MinesweeperIndexPage() {
           </aside>
         </div>
 
-        <section className="mt-5 overflow-hidden rounded-[1.75rem] border border-[#26394a] bg-[#111c28]">
-          <div className="flex items-center justify-between gap-4 border-b border-[#26394a] px-5 py-4">
+        <section className="mt-5 overflow-hidden border border-border bg-surface">
+          <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
             <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#8296a6]">
+              <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">
                 Workspaces
               </p>
               <h2 className="mt-1 text-sm font-semibold">Recent games</h2>
             </div>
-            <span className="font-mono text-[9px] text-[#8296a6]">
+            <span className="font-mono text-[9px] text-muted-foreground">
               {workspaces.data?.workspaces.length ?? 0} active
             </span>
           </div>
 
           {workspaces.isLoading ? (
-            <p className="p-5 text-sm text-[#8296a6]">Loading…</p>
+            <p className="p-5 text-sm text-muted-foreground">Loading…</p>
           ) : workspaces.data?.workspaces.length ? (
             <div>
               {workspaces.data.workspaces.map((workspace) => (
                 <button
                   key={workspace.id}
                   type="button"
-                  className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-[#26394a] px-5 py-4 text-left last:border-b-0 hover:bg-[#172534]"
+                  className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-border px-5 py-4 text-left last:border-b-0 hover:bg-muted"
                   onClick={() =>
                     navigate({
                       to: "/minesweeper/$gameId",
@@ -281,16 +280,16 @@ function MinesweeperIndexPage() {
                   }
                 >
                   <span className="flex min-w-0 items-center gap-3">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#163c39] text-[#63e6be]">
+                    <span className="grid size-9 shrink-0 place-items-center border border-border bg-surface-elevated text-[#73daca]">
                       <Bomb className="size-4" />
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate font-mono text-xs">
                         {workspace.id}
                       </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-3 font-mono text-[9px] text-[#8296a6]">
+                      <span className="mt-1 flex flex-wrap items-center gap-3 font-mono text-[9px] text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <Bomb className="size-3 text-[#ff7085]" />
+                          <Bomb className="size-3 text-[#f7768e]" />
                           {workspace.mines}
                         </span>
                         <span className="flex items-center gap-1">
@@ -307,12 +306,12 @@ function MinesweeperIndexPage() {
                       </span>
                     </span>
                   </span>
-                  <ArrowRight className="size-4 text-[#8296a6]" />
+                  <ArrowRight className="size-4 text-muted-foreground" />
                 </button>
               ))}
             </div>
           ) : (
-            <p className="p-5 text-sm text-[#8296a6]">
+            <p className="p-5 text-sm text-muted-foreground">
               No active workspaces yet.
             </p>
           )}
@@ -331,13 +330,13 @@ function FieldPreview({density}: {density: number}) {
   const mineCells = Math.max(1, Math.min(35, Math.round((density / 100) * 49)));
 
   return (
-    <div className="mt-5 grid grid-cols-7 gap-1 rounded-2xl bg-[#091018] p-3">
+    <div className="mt-5 grid grid-cols-7 gap-1 border border-border bg-background p-3">
       {Array.from({length: 49}, (_, index) => (
         <span
           key={index}
           className={cn(
-            "aspect-square rounded-[3px] bg-[#203142]",
-            (index * 17) % 49 < mineCells && "bg-[#63e6be]/80",
+            "aspect-square bg-muted",
+            (index * 17) % 49 < mineCells && "bg-[#73daca]/80",
           )}
         />
       ))}
@@ -347,8 +346,8 @@ function FieldPreview({density}: {density: number}) {
 
 function SetupMetric({label, value}: {label: string; value: string}) {
   return (
-    <div className="rounded-xl bg-[#172534] p-3">
-      <span className="block font-mono text-[8px] uppercase tracking-[0.12em] text-[#8296a6]">
+    <div className="border border-border bg-background p-3">
+      <span className="block font-mono text-[8px] uppercase tracking-[0.12em] text-muted-foreground">
         {label}
       </span>
       <span className="mt-1 block text-sm font-semibold">{value}</span>

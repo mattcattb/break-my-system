@@ -1,7 +1,6 @@
 import type {RedisTerminalSnapshot} from "@break-my-system/server";
 import {
   ChevronDown,
-  Database,
   KeyRound,
   Plug,
   PlugZap,
@@ -153,11 +152,9 @@ export function RedisStatusBar({
 
   return (
     <WorkspaceHeader
-      system="Go Redis"
+      system="redis"
       workspaceId={workspaceId}
       status={terminal.status}
-      backTo="/redis"
-      icon={<Database className="size-4 text-red-400" />}
       meta={`${terminal.commandCount} commands run`}
       actions={actions}
     />

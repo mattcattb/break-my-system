@@ -367,11 +367,9 @@ function WadWorkspacePage() {
   return (
     <div className="system-interface flex h-dvh min-h-[36rem] flex-col overflow-hidden bg-background">
       <WorkspaceHeader
-        system="WAD Filesystem"
+        system="wad"
         workspaceId={workspaceId}
         status={selectedWad ? (selectedWad.modified ? "modified" : "ready") : "waiting"}
-        backTo="/wad"
-        icon={<FileArchive className="size-4 text-amber-400" />}
         meta={`${workspace.data?.wads.length ?? 0} archives · protected working copies`}
         actions={<><Button variant="outline" size="sm" onClick={() => void download("wad")} disabled={!selectedWadId}><Download className="size-3.5" /> Download</Button><Button variant="danger" size="sm" onClick={() => close.mutate()} disabled={close.isPending}><Trash2 className="size-3.5" /> Close</Button></>}
       />

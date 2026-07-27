@@ -28,15 +28,15 @@ export function LeaderboardModal({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-[#03070b]/85 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(92vw,32rem)] -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] border border-[#26394a] bg-[#111c28] p-5 text-[#edf7f5] shadow-[0_28px_80px_rgba(0,0,0,0.45)]">
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(92vw,32rem)] -translate-x-1/2 -translate-y-1/2 border border-border bg-surface p-5 text-foreground shadow-2xl">
           <div className="flex items-start justify-between gap-4">
             <div>
               <Dialog.Title className="flex items-center gap-2 text-lg font-semibold">
-                <Trophy className="h-5 w-5 text-[#ffc857]" />
+                <Trophy className="h-5 w-5 text-[#e0af68]" />
                 Fastest clears
               </Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-[#8296a6]">
+              <Dialog.Description className="mt-1 text-sm text-muted-foreground">
                 Best completed games reported by the Minesweeper runtime.
               </Dialog.Description>
             </div>
@@ -44,7 +44,6 @@ export function LeaderboardModal({
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-xl text-[#8296a6] hover:border-[#26394a] hover:bg-[#172534] hover:text-[#edf7f5]"
                 aria-label="Close leaderboard"
               >
                 <X className="h-4 w-4" />
@@ -52,9 +51,9 @@ export function LeaderboardModal({
             </Dialog.Close>
           </div>
 
-          <div className="mt-5 overflow-hidden rounded-2xl border border-[#26394a]">
+          <div className="mt-5 overflow-hidden border border-border">
             {leaderboard.isLoading ? (
-              <div className="p-6 text-center text-sm text-[#8296a6]">
+              <div className="p-6 text-center text-sm text-muted-foreground">
                 Loading leaderboard…
               </div>
             ) : leaderboard.isError ? (
@@ -71,13 +70,13 @@ export function LeaderboardModal({
                 {leaderboard.data.entries.map((entry, index) => (
                   <li
                     key={`${entry.name}-${entry.seconds}-${index}`}
-                    className="grid grid-cols-[3rem_1fr_auto] items-center border-b border-[#26394a] px-4 py-3 last:border-b-0"
+                    className="grid grid-cols-[3rem_1fr_auto] items-center border-b border-border px-4 py-3 last:border-b-0"
                   >
-                    <span className="font-mono text-[#8296a6]">
+                    <span className="font-mono text-muted-foreground">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <span className="font-medium">{entry.name}</span>
-                    <span className="font-mono text-[#63e6be]">
+                    <span className="font-mono text-[#73daca]">
                       {formatTime(entry.seconds)}
                     </span>
                   </li>

@@ -1,7 +1,7 @@
-import {createFileRoute, Link} from "@tanstack/react-router";
+import {useQuery} from "@tanstack/react-query";
+import {createFileRoute} from "@tanstack/react-router";
+import {parseResponse} from "hono/client";
 import {
-  ArrowLeft,
-  ArrowRight,
   Check,
   Download,
   HardDrive,
@@ -23,6 +23,8 @@ import {
   useState,
 } from "react";
 import {cn} from "../../lib/cn";
+import {AppHeader} from "../../components/common/SystemShell";
+import {rpcClient} from "../../lib/rpc.client";
 
 export const Route = createFileRoute("/torrent/")({
   component: TorrentExperienceLab,
@@ -30,38 +32,33 @@ export const Route = createFileRoute("/torrent/")({
 
 const stages = [
   {
-    name: "Create your client",
+    name: "Connect the observer",
     description:
-      "Give this workspace a peer identity and an empty piece store.",
-    action: "Create Client Alpha",
+      "The BMS API is polling private read-only endpoints on each Go process.",
   },
   {
-    name: "Load the lesson torrent",
+    name: "Find the processes",
     description:
-      "The metadata identifies the artifact and its pieces, but contains none of the artifact bytes.",
-    action: "Load metadata",
+      "The tracker and torrent clients report their independently owned state.",
   },
   {
-    name: "Ask the tracker",
+    name: "Observe tracker announces",
     description:
       "Announce the info hash. The tracker introduces the client to peers in this swarm.",
-    action: "Discover peers",
   },
   {
-    name: "Transfer the pieces",
+    name: "Observe piece transfer",
     description:
-      "Client Alpha requests blocks from both seeders and verifies each completed piece.",
-    action: "Start transfer",
+      "Learners request blocks from connected peers and verify completed pieces before storing them.",
   },
   {
-    name: "Join the seeders",
+    name: "Swarm complete",
     description:
-      "Once every piece is verified, Client Alpha can upload the artifact to a new learner.",
-    action: "Verify and seed",
+      "Both learners have every verified piece and remain available to upload.",
   },
 ] as const;
 
-type NodeId = "tracker" | "atlas" | "client" | "beacon" | "learner";
+type NodeId = "tracker" | "atlas" | "client" | "beacon";
 
 const nodeDescriptions = {
   tracker: {
@@ -71,35 +68,48 @@ const nodeDescriptions = {
       "The tracker knows which peers announced this info hash. It introduces peers, but artifact bytes never pass through it.",
   },
   atlas: {
-    title: "Seeder Atlas",
+    title: "Official Seeder",
     kind: "Official peer",
     description:
-      "Atlas has every verified piece and serves requested blocks from its own storage.",
+      "This managed peer begins with every verified piece and serves requested blocks from its own storage.",
   },
   client: {
-    title: "Client Alpha",
-    kind: "Your workspace peer",
+    title: "Learner Alpha",
+    kind: "Learner peer",
     description:
-      "This is the client you control. Its role changes from empty peer, to leecher, to seeder as the lesson progresses.",
+      "Alpha downloaded the artifact and can upload its verified pieces to other peers in the swarm.",
   },
   beacon: {
-    title: "Seeder Beacon",
-    kind: "Official peer",
+    title: "Learner Beta",
+    kind: "Learner peer",
     description:
-      "Beacon is a second independent source. The client can continue when Atlas disconnects.",
-  },
-  learner: {
-    title: "Client Nova",
-    kind: "Later learner",
-    description:
-      "Nova demonstrates the final transition: your completed client is now useful to another member of the swarm.",
+      "Beta is an independent torrent client with its own peer identity, piece store, and protocol connections.",
   },
 } as const;
 
+const pieceProgress = (
+  snapshot:
+    | {
+        completePieces: number;
+        totalPieces: number;
+      }
+    | undefined,
+) =>
+  snapshot?.totalPieces
+    ? Math.round((snapshot.completePieces / snapshot.totalPieces) * 100)
+    : 0;
+
+const formatBytes = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
+};
+
+const shortID = (value: string | undefined) =>
+  value ? `${value.slice(0, 6)}…${value.slice(-6)}` : "Unavailable";
+
 function TorrentExperienceLab() {
-  const [stage, setStage] = useState(0);
   const [selectedNode, setSelectedNode] = useState<NodeId | null>(null);
-  const [atlasOffline, setAtlasOffline] = useState(false);
   const [view, setView] = useState({x: 0, y: 0, scale: 1});
   const drag = useRef<{
     pointerId: number;
@@ -109,24 +119,132 @@ function TorrentExperienceLab() {
     originY: number;
   } | null>(null);
 
-  const complete = stage === stages.length;
+  const lab = useQuery({
+    queryKey: ["torrent-lab"],
+    queryFn: () => parseResponse(rpcClient.api.torrent.lab.$get()),
+    refetchInterval: 1_000,
+    retry: false,
+  });
+  const tracker = lab.data?.tracker;
+  const trackerSnapshot =
+    tracker?.status === "online" ? tracker.snapshot : undefined;
+  const trackerOnline = Boolean(trackerSnapshot);
+  const trackerSwarm = trackerSnapshot?.swarms[0];
+  const seeder = lab.data?.clients.find((client) => client.id === "seeder");
+  const learnerAlpha = lab.data?.clients.find(
+    (client) => client.id === "learner-1",
+  );
+  const learnerBeta = lab.data?.clients.find(
+    (client) => client.id === "learner-2",
+  );
+  const seederTorrent =
+    seeder?.status === "online" ? seeder.snapshot.torrent : undefined;
+  const alphaTorrent =
+    learnerAlpha?.status === "online"
+      ? learnerAlpha.snapshot.torrent
+      : undefined;
+  const betaTorrent =
+    learnerBeta?.status === "online"
+      ? learnerBeta.snapshot.torrent
+      : undefined;
+  const seederPeerId =
+    seeder?.status === "online" ? seeder.snapshot.peerId : undefined;
+  const alphaPeerId =
+    learnerAlpha?.status === "online"
+      ? learnerAlpha.snapshot.peerId
+      : undefined;
+  const betaPeerId =
+    learnerBeta?.status === "online"
+      ? learnerBeta.snapshot.peerId
+      : undefined;
+  const seederAlphaConnected = Boolean(
+    seederPeerId &&
+      alphaPeerId &&
+      (seederTorrent?.peers.some((peer) => peer.peerId === alphaPeerId) ||
+        alphaTorrent?.peers.some((peer) => peer.peerId === seederPeerId)),
+  );
+  const seederBetaConnected = Boolean(
+    seederPeerId &&
+      betaPeerId &&
+      (seederTorrent?.peers.some((peer) => peer.peerId === betaPeerId) ||
+        betaTorrent?.peers.some((peer) => peer.peerId === seederPeerId)),
+  );
+  const learnersConnected = Boolean(
+    alphaPeerId &&
+      betaPeerId &&
+      (alphaTorrent?.peers.some((peer) => peer.peerId === betaPeerId) ||
+        betaTorrent?.peers.some((peer) => peer.peerId === alphaPeerId)),
+  );
+  const alphaProgress = pieceProgress(alphaTorrent);
+  const betaProgress = pieceProgress(betaTorrent);
+  const alphaTransferring = (alphaTorrent?.bytesLeft ?? 0) > 0;
+  const betaTransferring = (betaTorrent?.bytesLeft ?? 0) > 0;
+  const transferring =
+    alphaTransferring || betaTransferring;
+  const complete =
+    alphaTorrent?.bytesLeft === 0 && betaTorrent?.bytesLeft === 0;
+  const hasOfflineNode = Boolean(
+    lab.data &&
+      (!trackerOnline ||
+        seeder?.status === "offline" ||
+        learnerAlpha?.status === "offline" ||
+        learnerBeta?.status === "offline"),
+  );
+  const stage = !lab.data
+    ? 0
+    : !trackerOnline
+      ? 1
+      : !trackerSwarm?.peers.length
+        ? 2
+        : transferring
+          ? 4
+          : complete
+            ? stages.length
+            : 3;
   const currentStage = stages[Math.min(stage, stages.length - 1)];
-  const progress = stage < 4 ? 0 : complete ? 100 : atlasOffline ? 52 : 68;
-  const connectedPeers = stage >= 3 ? (atlasOffline ? 1 : 2) : 0;
-  const downloadRate =
-    stage === 4 ? (atlasOffline ? "620 KB/s" : "1.4 MB/s") : "0 KB/s";
-  const uploadRate = complete ? "420 KB/s" : "0 KB/s";
-
-  function advance() {
-    setStage((current) => Math.min(current + 1, stages.length));
-  }
-
-  function resetLesson() {
-    setStage(0);
-    setAtlasOffline(false);
-    setSelectedNode(null);
-    setView({x: 0, y: 0, scale: 1});
-  }
+  const connectedPeers = alphaTorrent?.peers.length ?? 0;
+  const downloaded = formatBytes(alphaTorrent?.downloadedBytes ?? 0);
+  const uploaded = formatBytes(alphaTorrent?.uploadedBytes ?? 0);
+  const onlineNodeCount =
+    Number(trackerOnline) +
+    [seeder, learnerAlpha, learnerBeta].filter(
+      (node) => node?.status === "online",
+    ).length;
+  const torrentRows = (
+    peerId: string | undefined,
+    snapshot: typeof alphaTorrent,
+  ) =>
+    snapshot
+      ? [
+          ["Peer ID", shortID(peerId)],
+          [
+            "Verified",
+            `${snapshot.completePieces} / ${snapshot.totalPieces} pieces`,
+          ],
+          ["Connections", String(snapshot.peers.length)],
+          ["Downloaded", formatBytes(snapshot.downloadedBytes)],
+          ["Uploaded", formatBytes(snapshot.uploadedBytes)],
+          ["Pending requests", String(snapshot.pendingRequests)],
+        ]
+      : [["Status", "Unavailable"]];
+  const inspectorRows =
+    selectedNode === "tracker"
+      ? trackerOnline
+        ? [
+            ["Info hash", shortID(trackerSwarm?.infoHash)],
+            ["Known peers", String(trackerSwarm?.peers.length ?? 0)],
+            [
+              "Announce interval",
+              `${trackerSnapshot?.intervalSeconds ?? 0}s`,
+            ],
+            ["Artifact traffic", "None"],
+          ]
+        : [["Status", "Unavailable"]]
+      : selectedNode === "atlas"
+        ? torrentRows(seederPeerId, seederTorrent)
+        : selectedNode === "client"
+          ? torrentRows(alphaPeerId, alphaTorrent)
+          : torrentRows(betaPeerId, betaTorrent);
 
   function zoomBy(amount: number) {
     setView((current) => ({
@@ -169,30 +287,23 @@ function TorrentExperienceLab() {
 
   return (
     <div className="system-interface flex h-screen min-h-[640px] flex-col overflow-hidden bg-background text-foreground">
-      <header className="z-40 flex h-12 shrink-0 items-center justify-between border-b border-border bg-background px-3 sm:px-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <Link
-            to="/"
-            className="icon-button shrink-0"
-            aria-label="Back to system directory"
-          >
-            <ArrowLeft className="size-4" />
-          </Link>
-          <div className="min-w-0">
-            <p className="truncate font-mono text-[8px] uppercase tracking-[0.18em] text-muted-foreground">
-              Go Torrent / Swarm Lab
-            </p>
-            <h1 className="truncate text-xs font-semibold sm:text-sm">
-              Peer protocol map
-            </h1>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2 font-mono text-[8px] uppercase tracking-wider text-muted-foreground">
-          <span className="size-1.5 rounded-full bg-warning" />
-          <span className="hidden sm:inline">Static prototype · </span>
-          No backend
-        </div>
-      </header>
+      <AppHeader
+        currentSystem="torrent"
+        trailing={<div className="flex shrink-0 items-center gap-2 font-mono text-[8px] uppercase tracking-wider text-muted-foreground">
+          <span
+            className={cn(
+              "size-1.5 rounded-full",
+              onlineNodeCount === 4
+                ? "bg-success"
+                : lab.isError
+                  ? "bg-destructive"
+                  : "bg-warning",
+            )}
+          />
+          <span className="hidden sm:inline">Live API · </span>
+          {lab.isError ? "Unavailable" : `${onlineNodeCount} / 4 online`}
+        </div>}
+      />
 
       <main
         className="relative min-h-0 flex-1 cursor-grab overflow-hidden active:cursor-grabbing"
@@ -258,7 +369,9 @@ function TorrentExperienceLab() {
               d="M 500 115 C 420 155, 300 170, 215 238"
               className={cn(
                 "fill-none stroke-muted-foreground stroke-1 [stroke-dasharray:5_7] transition-opacity",
-                stage >= 3 ? "opacity-45" : "opacity-10",
+                trackerOnline && seeder?.status === "online"
+                  ? "opacity-45"
+                  : "opacity-10",
               )}
               markerEnd="url(#arrow-muted)"
             />
@@ -266,7 +379,9 @@ function TorrentExperienceLab() {
               d="M 500 115 C 530 170, 690 150, 785 205"
               className={cn(
                 "fill-none stroke-muted-foreground stroke-1 [stroke-dasharray:5_7] transition-opacity",
-                stage >= 3 ? "opacity-45" : "opacity-10",
+                trackerOnline && learnerBeta?.status === "online"
+                  ? "opacity-45"
+                  : "opacity-10",
               )}
               markerEnd="url(#arrow-muted)"
             />
@@ -274,7 +389,9 @@ function TorrentExperienceLab() {
               d="M 500 115 C 500 180, 505 245, 505 300"
               className={cn(
                 "fill-none stroke-muted-foreground stroke-1 [stroke-dasharray:5_7] transition-opacity",
-                stage >= 3 ? "opacity-45" : "opacity-10",
+                trackerOnline && learnerAlpha?.status === "online"
+                  ? "opacity-45"
+                  : "opacity-10",
               )}
               markerEnd="url(#arrow-muted)"
             />
@@ -284,47 +401,47 @@ function TorrentExperienceLab() {
               d="M 280 290 C 340 295, 390 325, 430 345"
               className={cn(
                 "fill-none stroke-primary stroke-2 transition-opacity",
-                stage >= 4 && !atlasOffline ? "opacity-60" : "opacity-10",
+                seederAlphaConnected ? "opacity-60" : "opacity-10",
               )}
               markerEnd="url(#arrow-primary)"
             />
             <path
-              id="beacon-transfer"
-              d="M 720 255 C 650 270, 590 315, 575 345"
+              id="seeder-beta-transfer"
+              d="M 280 255 C 420 180, 600 185, 720 230"
               className={cn(
                 "fill-none stroke-primary stroke-2 transition-opacity",
-                stage >= 4 ? "opacity-60" : "opacity-10",
+                seederBetaConnected ? "opacity-60" : "opacity-10",
               )}
               markerEnd="url(#arrow-primary)"
             />
             <path
-              id="client-upload"
-              d="M 570 400 C 625 440, 690 485, 730 510"
+              id="learner-transfer"
+              d="M 575 345 C 635 315, 675 285, 720 255"
               className={cn(
-                "fill-none stroke-success stroke-2 transition-opacity",
-                complete ? "opacity-70" : "opacity-0",
+                "fill-none stroke-primary stroke-2 transition-opacity",
+                learnersConnected ? "opacity-60" : "opacity-10",
               )}
               markerEnd="url(#arrow-primary)"
             />
 
-            {stage === 4 && !atlasOffline && (
+            {alphaTransferring && seederAlphaConnected && (
               <circle r="5" fill="hsl(var(--primary))">
                 <animateMotion dur="1.8s" repeatCount="indefinite">
                   <mpath href="#atlas-transfer" />
                 </animateMotion>
               </circle>
             )}
-            {stage === 4 && (
+            {betaTransferring && seederBetaConnected && (
               <circle r="5" fill="hsl(var(--primary))">
                 <animateMotion dur="1.35s" repeatCount="indefinite">
-                  <mpath href="#beacon-transfer" />
+                  <mpath href="#seeder-beta-transfer" />
                 </animateMotion>
               </circle>
             )}
-            {complete && (
-              <circle r="5" fill="hsl(var(--success))">
+            {betaTransferring && learnersConnected && (
+              <circle r="5" fill="hsl(var(--primary))">
                 <animateMotion dur="1.7s" repeatCount="indefinite">
-                  <mpath href="#client-upload" />
+                  <mpath href="#learner-transfer" />
                 </animateMotion>
               </circle>
             )}
@@ -332,51 +449,58 @@ function TorrentExperienceLab() {
 
           <GraphNode
             id="tracker"
-            icon={Radio}
+            icon={trackerOnline ? Radio : WifiOff}
             label="BMS Tracker"
             eyebrow="Discovery"
-            status={stage >= 3 ? "2 peers returned" : "Waiting for announce"}
-            active={stage >= 3}
+            status={
+              trackerOnline
+                ? `${trackerSwarm?.peers.length ?? 0} announced peers`
+                : tracker?.status === "offline"
+                  ? tracker.error
+                  : "Waiting for API"
+            }
+            active={trackerOnline}
+            warning={Boolean(lab.data && !trackerOnline)}
             selected={selectedNode === "tracker"}
             className="left-[415px] top-[40px]"
             onSelect={setSelectedNode}
           />
           <GraphNode
             id="atlas"
-            icon={atlasOffline ? WifiOff : Server}
-            label="Seeder Atlas"
+            icon={seederTorrent ? Server : WifiOff}
+            label="Official Seeder"
             eyebrow="Official peer"
             status={
-              atlasOffline
-                ? "Offline"
-                : stage === 4
-                  ? "Uploading · 780 KB/s"
-                  : "12 / 12 pieces"
+              seederTorrent
+                ? `${seederTorrent.completePieces} / ${seederTorrent.totalPieces} pieces · ${formatBytes(seederTorrent.uploadedBytes)} up`
+                : seeder?.status === "offline"
+                  ? seeder.error
+                  : "Waiting for API"
             }
-            active={stage >= 3 && !atlasOffline}
-            warning={atlasOffline}
+            progress={pieceProgress(seederTorrent)}
+            active={Boolean(seederTorrent)}
+            warning={Boolean(seeder && !seederTorrent)}
             selected={selectedNode === "atlas"}
             className="left-[110px] top-[230px]"
             onSelect={setSelectedNode}
           />
           <GraphNode
             id="client"
-            icon={stage === 0 ? Network : HardDrive}
-            label={stage === 0 ? "Your client" : "Client Alpha"}
+            icon={alphaTorrent ? HardDrive : WifiOff}
+            label="Learner Alpha"
             eyebrow={
-              complete ? "Seeder" : stage >= 4 ? "Leecher" : "Workspace peer"
+              alphaTorrent?.bytesLeft === 0 ? "Seeder" : "Learner peer"
             }
             status={
-              stage === 0
-                ? "Not created"
-                : complete
-                  ? "Uploading · 420 KB/s"
-                  : stage >= 4
-                    ? `${progress}% · ${downloadRate}`
-                    : "0 / 12 pieces"
+              alphaTorrent
+                ? `${alphaTorrent.completePieces} / ${alphaTorrent.totalPieces} pieces · ${downloaded} down`
+                : learnerAlpha?.status === "offline"
+                  ? learnerAlpha.error
+                  : "Waiting for API"
             }
-            progress={progress}
-            active={stage >= 1}
+            progress={alphaProgress}
+            active={Boolean(alphaTorrent)}
+            warning={Boolean(learnerAlpha && !alphaTorrent)}
             primary
             selected={selectedNode === "client"}
             className="left-[410px] top-[290px]"
@@ -384,32 +508,25 @@ function TorrentExperienceLab() {
           />
           <GraphNode
             id="beacon"
-            icon={Server}
-            label="Seeder Beacon"
-            eyebrow="Official peer"
+            icon={betaTorrent ? HardDrive : WifiOff}
+            label="Learner Beta"
+            eyebrow={betaTorrent?.bytesLeft === 0 ? "Seeder" : "Learner peer"}
             status={
-              stage === 4 ? "Uploading · 920 KB/s" : "12 / 12 pieces"
+              betaTorrent
+                ? `${betaTorrent.completePieces} / ${betaTorrent.totalPieces} pieces · ${formatBytes(betaTorrent.downloadedBytes)} down`
+                : learnerBeta?.status === "offline"
+                  ? learnerBeta.error
+                  : "Waiting for API"
             }
-            active={stage >= 3}
+            progress={betaProgress}
+            active={Boolean(betaTorrent)}
+            warning={Boolean(learnerBeta && !betaTorrent)}
             selected={selectedNode === "beacon"}
             className="left-[720px] top-[190px]"
             onSelect={setSelectedNode}
           />
-          {complete && (
-            <GraphNode
-              id="learner"
-              icon={Download}
-              label="Client Nova"
-              eyebrow="New learner"
-              status="Receiving from you"
-              active
-              selected={selectedNode === "learner"}
-              className="left-[720px] top-[475px]"
-              onSelect={setSelectedNode}
-            />
-          )}
 
-          {stage >= 3 && (
+          {trackerSwarm && (
             <>
               <EdgeLabel className="left-[275px] top-[145px]">
                 peer list
@@ -419,29 +536,28 @@ function TorrentExperienceLab() {
               </EdgeLabel>
             </>
           )}
-          {stage === 4 && (
+          {(seederAlphaConnected ||
+            seederBetaConnected ||
+            learnersConnected) && (
             <>
-              {!atlasOffline && (
+              {seederAlphaConnected && (
                 <EdgeLabel className="left-[320px] top-[300px]">
-                  pieces 0–5
+                  peer connection
                 </EdgeLabel>
               )}
-              <EdgeLabel className="left-[630px] top-[290px]">
-                pieces 6–11
-              </EdgeLabel>
+              {learnersConnected && (
+                <EdgeLabel className="left-[630px] top-[290px]">
+                  peer connection
+                </EdgeLabel>
+              )}
             </>
-          )}
-          {complete && (
-            <EdgeLabel className="left-[635px] top-[445px]">
-              your upload
-            </EdgeLabel>
           )}
         </div>
 
         <section className="pointer-events-auto absolute left-3 top-3 w-[min(20rem,calc(100%-1.5rem))] border border-border bg-surface/95 shadow-2xl backdrop-blur sm:left-4 sm:top-4">
           <div className="flex items-center justify-between border-b border-border px-3 py-2">
             <p className="font-mono text-[8px] uppercase tracking-[0.16em] text-muted-foreground">
-              Lesson 01 · Stage {Math.min(stage + 1, stages.length)} of{" "}
+              Live observation · Stage {Math.min(stage + 1, stages.length)} of{" "}
               {stages.length}
             </p>
             <div className="flex gap-1">
@@ -462,50 +578,35 @@ function TorrentExperienceLab() {
           </div>
           <div className="p-3">
             <h2 className="text-base font-semibold">
-              {complete ? "You are part of the swarm" : currentStage.name}
+              {lab.isError
+                ? "Observer unavailable"
+                : hasOfflineNode
+                  ? "A swarm node is offline"
+                  : complete
+                    ? "The swarm is complete"
+                    : currentStage.name}
             </h2>
             <p className="mt-1.5 text-[11px] leading-5 text-muted-foreground">
-              {complete
-                ? "The artifact is unlocked, and Client Alpha is now sending verified pieces to Client Nova."
-                : currentStage.description}
+              {lab.isError
+                ? "The web application could not reach the BMS API. The Go processes may still be running."
+                : hasOfflineNode
+                  ? "Healthy nodes remain visible while the unavailable process is marked independently. Tracker peers expire after their announce TTL."
+                  : complete
+                    ? "Both learners verified all 20 pieces. Their upload counters show when they subsequently served another peer."
+                    : currentStage.description}
             </p>
             <div className="mt-3 flex gap-2">
               <button
                 type="button"
-                onClick={complete ? resetLesson : advance}
+                onClick={() => void lab.refetch()}
+                disabled={lab.isFetching}
                 className="flex min-h-9 flex-1 items-center justify-between bg-primary px-3 text-[11px] font-semibold text-primary-foreground hover:brightness-110"
               >
-                {complete ? "Restart lesson" : currentStage.action}
-                {complete ? (
-                  <RotateCcw className="size-3.5" />
-                ) : (
-                  <ArrowRight className="size-3.5" />
-                )}
+                {lab.isFetching ? "Observing…" : "Refresh snapshot"}
+                <RotateCcw
+                  className={cn("size-3.5", lab.isFetching && "animate-spin")}
+                />
               </button>
-              {stage >= 3 && !complete && (
-                <button
-                  type="button"
-                  onClick={() => setAtlasOffline((offline) => !offline)}
-                  className={cn(
-                    "flex size-9 shrink-0 items-center justify-center border",
-                    atlasOffline
-                      ? "border-warning bg-warning/10 text-warning"
-                      : "border-border bg-surface text-muted-foreground hover:text-foreground",
-                  )}
-                  aria-label={
-                    atlasOffline
-                      ? "Bring Seeder Atlas online"
-                      : "Take Seeder Atlas offline"
-                  }
-                  title={
-                    atlasOffline
-                      ? "Bring Seeder Atlas online"
-                      : "Take Seeder Atlas offline"
-                  }
-                >
-                  <WifiOff className="size-3.5" />
-                </button>
-              )}
             </div>
           </div>
         </section>
@@ -548,12 +649,7 @@ function TorrentExperienceLab() {
         {selectedNode && (
           <NodeInspector
             node={selectedNode}
-            stage={stage}
-            progress={progress}
-            connectedPeers={connectedPeers}
-            atlasOffline={atlasOffline}
-            downloadRate={downloadRate}
-            uploadRate={uploadRate}
+            rows={inspectorRows}
             onClose={() => setSelectedNode(null)}
           />
         )}
@@ -561,10 +657,10 @@ function TorrentExperienceLab() {
         <section className="pointer-events-auto absolute inset-x-0 bottom-0 grid h-14 grid-cols-4 divide-x divide-border border-t border-border bg-surface/95 backdrop-blur">
           <StatusMetric
             icon={Download}
-            label="Download"
-            value={downloadRate}
+            label="Downloaded"
+            value={downloaded}
           />
-          <StatusMetric icon={Upload} label="Upload" value={uploadRate} />
+          <StatusMetric icon={Upload} label="Uploaded" value={uploaded} />
           <StatusMetric
             icon={Network}
             label="Peers"
@@ -573,7 +669,7 @@ function TorrentExperienceLab() {
           <StatusMetric
             icon={Check}
             label="Verified"
-            value={`${progress}%`}
+            value={`${alphaTorrent?.completePieces ?? 0} / ${alphaTorrent?.totalPieces ?? 0}`}
           />
         </section>
       </main>
@@ -704,56 +800,14 @@ function EdgeLabel({
 
 function NodeInspector({
   node,
-  stage,
-  progress,
-  connectedPeers,
-  atlasOffline,
-  downloadRate,
-  uploadRate,
+  rows,
   onClose,
 }: {
   node: NodeId;
-  stage: number;
-  progress: number;
-  connectedPeers: number;
-  atlasOffline: boolean;
-  downloadRate: string;
-  uploadRate: string;
+  rows: string[][];
   onClose: () => void;
 }) {
   const details = nodeDescriptions[node];
-  const rows =
-    node === "tracker"
-      ? [
-          ["Info hash", stage >= 2 ? "8f7a…c241" : "Not announced"],
-          ["Known peers", stage >= 3 ? "3" : "0"],
-          ["Artifact traffic", "None"],
-        ]
-      : node === "client"
-        ? [
-            ["Peer ID", stage >= 1 ? "-BMS01-a83f…" : "Not created"],
-            ["Verified", `${progress}%`],
-            ["Connections", String(connectedPeers)],
-            ["Download", downloadRate],
-            ["Upload", uploadRate],
-          ]
-        : node === "atlas"
-          ? [
-              ["Availability", atlasOffline ? "Offline" : "100%"],
-              ["Pieces", "12 / 12"],
-              ["Upload", stage === 4 && !atlasOffline ? "780 KB/s" : "0 KB/s"],
-            ]
-          : node === "beacon"
-            ? [
-                ["Availability", "100%"],
-                ["Pieces", "12 / 12"],
-                ["Upload", stage === 4 ? "920 KB/s" : "0 KB/s"],
-              ]
-            : [
-                ["Verified", "18%"],
-                ["Source", "Client Alpha"],
-                ["Download", "420 KB/s"],
-              ];
 
   return (
     <aside className="pointer-events-auto absolute bottom-[4.5rem] left-3 right-3 border border-border bg-surface/95 shadow-2xl backdrop-blur sm:bottom-auto sm:left-auto sm:right-4 sm:top-20 sm:w-72">

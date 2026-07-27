@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>Break My System</title>
+  <defs>
+    <linearGradient id="systems-left" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#f7768e" />
+      <stop offset=".5" stop-color="#f7768e" />
+      <stop offset=".5" stop-color="#bb9af7" />
+      <stop offset="1" stop-color="#bb9af7" />
+    </linearGradient>
+    <linearGradient id="systems-right" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#7dcfff" />
+      <stop offset=".5" stop-color="#7dcfff" />
+      <stop offset=".5" stop-color="#73daca" />
+      <stop offset="1" stop-color="#73daca" />
+    </linearGradient>
+  </defs>
+  <rect x="3" y="17" width="7" height="12" rx="1.5" fill="url(#systems-left)" />
+  <rect x="13" y="3" width="7" height="26" rx="1.5" fill="#e0af68" />
+  <rect x="23" y="11" width="7" height="18" rx="1.5" fill="url(#systems-right)" />
+</svg>

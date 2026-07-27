@@ -51,9 +51,9 @@ export const Route = createFileRoute("/minesweeper/$gameId")({
 
 function MinesweeperGamePending() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#091018] p-6 text-[#edf7f5]">
+    <main className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
       <ResourceState
-        className="w-full max-w-md rounded-2xl border-[#26394a] bg-[#111c28]"
+        className="w-full max-w-md border-border bg-surface"
         title="Loading game…"
         description="Retrieving the workspace before connecting to its runtime."
       />
@@ -65,9 +65,9 @@ function MinesweeperGameError() {
   const navigate = useNavigate();
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#091018] p-6 text-[#edf7f5]">
+    <main className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
       <ResourceState
-        className="w-full max-w-md rounded-2xl border-[#26394a] bg-[#111c28]"
+        className="w-full max-w-md border-border bg-surface"
         title="Game unavailable"
         description="The workspace could not be loaded. Return to Minesweeper and try again."
         actionLabel="Back to Minesweeper"
@@ -102,11 +102,11 @@ function MinesweeperGamePage() {
   const elapsed = `${String(Math.floor(elapsedSeconds / 60)).padStart(2, "0")}:${String(elapsedSeconds % 60).padStart(2, "0")}`;
   const gameStatusTone =
     gameStatus.toLowerCase() === "lost"
-      ? "bg-[#321923] text-[#ff7085]"
-      : "bg-[#163c39] text-[#63e6be]";
+      ? "bg-danger/10 text-danger"
+      : "bg-[#73daca]/10 text-[#73daca]";
 
   return (
-    <div className="min-h-screen bg-[#091018] text-[#edf7f5]">
+    <div className="system-interface min-h-screen bg-background text-foreground">
       <MinesweeperHeader
         workspaceId={gameId}
         status={gameStatus}
@@ -115,7 +115,6 @@ function MinesweeperGamePage() {
             <Button
               variant="outline"
               size="icon"
-              className="rounded-xl border-[#26394a] bg-[#111c28] text-[#8296a6] hover:bg-[#172534] hover:text-[#edf7f5]"
               aria-label="Open leaderboard"
               onClick={() => setLeaderboardOpen(true)}
             >
@@ -124,7 +123,6 @@ function MinesweeperGamePage() {
             <Button
               variant="outline"
               size="icon"
-              className="rounded-xl border-[#26394a] bg-[#111c28] text-[#8296a6] hover:bg-[#172534] hover:text-[#edf7f5]"
               disabled={!isConnected}
               aria-label="Restart game"
               onClick={restartGame}
@@ -135,31 +133,31 @@ function MinesweeperGamePage() {
         }
       />
 
-      <div className="border-b border-[#26394a] bg-[#0d151f]">
-        <div className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-4 py-3 sm:px-8">
+      <div className="border-b border-border bg-surface">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 overflow-x-auto px-4 py-3 sm:px-6">
           <GameMetric
-            icon={<Bomb className="size-3.5 text-[#ff7085]" />}
+            icon={<Bomb className="size-3.5 text-[#f7768e]" />}
             label="Mines"
             value={String(snapshot?.remainingMines ?? workspace.mines)}
           />
           <GameMetric
-            icon={<Clock3 className="size-3.5 text-[#63e6be]" />}
+            icon={<Clock3 className="size-3.5 text-[#73daca]" />}
             label="Time"
             value={elapsed}
           />
           <GameMetric
-            icon={<Flag className="size-3.5 text-[#ffc857]" />}
+            icon={<Flag className="size-3.5 text-[#e0af68]" />}
             label="Status"
             value={gameStatus}
           />
         </div>
       </div>
 
-      <main className="mx-auto grid w-full max-w-6xl gap-5 px-3 py-6 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
+      <main className="mx-auto grid w-full max-w-5xl gap-5 px-4 py-6 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
         <section className="min-w-0">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3 px-1">
             <div>
-              <p className="font-mono text-[8px] uppercase tracking-[0.16em] text-[#8296a6]">
+              <p className="font-mono text-[8px] uppercase tracking-[0.16em] text-muted-foreground">
                 Workspace {gameId}
               </p>
               <h2 className="mt-1 text-lg font-semibold">
@@ -185,13 +183,13 @@ function MinesweeperGamePage() {
             />
           ) : (
             <ResourceState
-              className="rounded-[1.75rem] border-[#26394a] bg-[#111c28]"
+              className="border-border bg-surface"
               title={isConnected ? "Synchronizing board…" : "Connecting…"}
               description="The board will appear after the runtime sends its authoritative snapshot."
             />
           )}
 
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[10px] text-[#8296a6]">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <MousePointer2 className="size-3" />
               Reveal
@@ -204,8 +202,8 @@ function MinesweeperGamePage() {
         </section>
 
         <aside className="grid content-start gap-3 sm:grid-cols-2 lg:grid-cols-1">
-          <div className="rounded-2xl border border-[#26394a] bg-[#111c28] p-4">
-            <p className="font-mono text-[8px] uppercase tracking-[0.15em] text-[#8296a6]">
+          <div className="border border-border bg-surface p-4">
+            <p className="font-mono text-[8px] uppercase tracking-[0.15em] text-muted-foreground">
               Game detail
             </p>
             <dl className="mt-4 space-y-3 text-xs">
@@ -222,8 +220,8 @@ function MinesweeperGamePage() {
             </dl>
           </div>
 
-          <div className="rounded-2xl border border-[#26394a] bg-[#111c28] p-4">
-            <p className="font-mono text-[8px] uppercase tracking-[0.15em] text-[#8296a6]">
+          <div className="border border-border bg-surface p-4">
+            <p className="font-mono text-[8px] uppercase tracking-[0.15em] text-muted-foreground">
               Runtime
             </p>
             <dl className="mt-4 space-y-3 text-xs">
@@ -236,8 +234,8 @@ function MinesweeperGamePage() {
             </dl>
           </div>
 
-          <div className="flex gap-2 rounded-2xl border border-[#26394a] bg-[#111c28] p-4 text-[10px] leading-4 text-[#8296a6] sm:col-span-2 lg:col-span-1">
-            <Info className="mt-0.5 size-3.5 shrink-0 text-[#63e6be]" />
+          <div className="flex gap-2 border border-border bg-surface p-4 text-[10px] leading-4 text-muted-foreground sm:col-span-2 lg:col-span-1">
+            <Info className="mt-0.5 size-3.5 shrink-0 text-[#73daca]" />
             The runtime owns the board. Every reveal and flag is confirmed by a
             fresh snapshot.
           </div>
@@ -262,9 +260,9 @@ function GameMetric({
   value: string;
 }) {
   return (
-    <div className="flex min-w-max items-center gap-2 rounded-xl border border-[#26394a] bg-[#111c28] px-3 py-2">
+    <div className="flex min-w-max items-center gap-2 border border-border bg-background px-3 py-2">
       {icon}
-      <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-[#8296a6]">
+      <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-muted-foreground">
         {label}
       </span>
       <strong className="font-mono text-[10px] font-medium capitalize">
@@ -277,7 +275,7 @@ function GameMetric({
 function DetailRow({label, value}: {label: string; value: string}) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="text-[#8296a6]">{label}</dt>
+      <dt className="text-muted-foreground">{label}</dt>
       <dd className="font-mono text-[10px]">{value}</dd>
     </div>
   );

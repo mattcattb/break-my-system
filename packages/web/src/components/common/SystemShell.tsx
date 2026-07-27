@@ -1,28 +1,177 @@
 import {Link} from "@tanstack/react-router";
-import {ArrowLeft, Box, ChevronDown, Grid2X2} from "lucide-react";
+import {
+  Bomb,
+  Braces,
+  Database,
+  FileArchive,
+  Network,
+} from "lucide-react";
+import type {LucideIcon} from "lucide-react";
 import type {ReactNode} from "react";
 import {cn} from "../../lib/cn";
 
-export function AppHeader({currentSystem}: {currentSystem?: string}) {
+export const systemCatalog = {
+  redis: {
+    label: "Go Redis",
+    code: "REDIS / GO",
+    detail: "RESP · TCP",
+    to: "/redis" as const,
+    icon: Database,
+    accent: "text-[#f7768e]",
+  },
+  plc: {
+    label: "PLC Runtime",
+    code: "PLC / JVM",
+    detail: "PARSER · EVALUATOR",
+    to: "/plc" as const,
+    icon: Braces,
+    accent: "text-[#bb9af7]",
+  },
+  wad: {
+    label: "WAD Filesystem",
+    code: "WAD / C++",
+    detail: "BINARY · FILESYSTEM",
+    to: "/wad" as const,
+    icon: FileArchive,
+    accent: "text-[#e0af68]",
+  },
+  minesweeper: {
+    label: "Minesweeper",
+    code: "MINE / C++",
+    detail: "WEBSOCKET · REALTIME",
+    to: "/minesweeper" as const,
+    icon: Bomb,
+    accent: "text-[#73daca]",
+  },
+  torrent: {
+    label: "Go Torrent",
+    code: "TORRENT / GO",
+    detail: "P2P · PIECES",
+    to: "/torrent" as const,
+    icon: Network,
+    accent: "text-[#7dcfff]",
+  },
+} satisfies Record<
+  string,
+  {
+    label: string;
+    code: string;
+    detail: string;
+    to: string;
+    icon: LucideIcon;
+    accent: string;
+  }
+>;
+
+export type SystemId = keyof typeof systemCatalog;
+
+export function SystemMark({
+  system,
+  bare = false,
+  className,
+}: {
+  system: SystemId;
+  bare?: boolean;
+  className?: string;
+}) {
+  const {icon: Icon, accent} = systemCatalog[system];
+
+  if (bare) {
+    return <Icon className={cn("size-5 shrink-0", accent, className)} />;
+  }
+
+  return (
+    <span
+      className={cn(
+        "grid size-10 shrink-0 place-items-center rounded-xl border border-border bg-surface-elevated",
+        accent,
+        className,
+      )}
+    >
+      <Icon className="size-4" />
+    </span>
+  );
+}
+
+function BrandMark() {
+  return (
+    <span className="brand-mark" aria-hidden="true">
+      <span />
+      <span />
+      <span />
+    </span>
+  );
+}
+
+export function AppHeader({
+  currentSystem,
+  workspaceId,
+  workspaceMeta,
+  status,
+  actions,
+  trailing,
+}: {
+  currentSystem?: SystemId;
+  workspaceId?: string;
+  workspaceMeta?: ReactNode;
+  status?: string;
+  actions?: ReactNode;
+  trailing?: ReactNode;
+}) {
+  const system = currentSystem ? systemCatalog[currentSystem] : undefined;
+
   return (
     <header className="app-header">
-      <Link to="/" className="brand-lockup" aria-label="Break My System home">
-        <span className="brand-mark" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </span>
-        <span>
-          <span className="brand-name">BREAK / MY SYSTEM</span>
-        </span>
-      </Link>
-      {currentSystem ? (
-        <Link to="/" className="system-switcher">
-          <Grid2X2 className="size-3.5" />
-          <span>{currentSystem}</span>
-          <ChevronDown className="size-3.5 text-muted-foreground" />
-        </Link>
-      ) : null}
+      <div className="app-header-inner">
+        <nav className="flex min-w-0 items-center gap-3 sm:gap-4" aria-label="Application context">
+          <Link to="/" className="brand-lockup" aria-label="Break My System home">
+            <BrandMark />
+            <span className="brand-name hidden sm:block">Break / My System</span>
+          </Link>
+          {system ? (
+            <>
+              <span className="h-8 w-px shrink-0 bg-border" aria-hidden="true" />
+              <Link to={system.to} className="flex min-w-0 items-center gap-3 text-foreground">
+                <SystemMark system={currentSystem!} bare />
+                <span className="min-w-0">
+                  <span className="brand-eyebrow truncate">
+                    {system.code} · {system.detail}
+                  </span>
+                  <span className="brand-name truncate">{system.label}</span>
+                </span>
+              </Link>
+            </>
+          ) : null}
+          {workspaceId ? (
+            <>
+              <span className="h-8 w-px shrink-0 bg-border" aria-hidden="true" />
+              <span className="min-w-0">
+                <span className="brand-eyebrow">Workspace</span>
+                <span className="block min-w-0 truncate font-mono text-[11px] text-foreground/80">
+                  {workspaceId}
+                  {workspaceMeta ? (
+                    <span className="hidden text-muted-foreground lg:inline">
+                      {" · "}{workspaceMeta}
+                    </span>
+                  ) : null}
+                </span>
+              </span>
+            </>
+          ) : null}
+        </nav>
+        {trailing ??
+          (status || actions ? (
+            <div className="flex shrink-0 items-center gap-2">
+              {status ? (
+                <span className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 font-mono text-[8px] uppercase tracking-[0.12em] text-muted-foreground">
+                  <StatusDot status={status} />
+                  {status}
+                </span>
+              ) : null}
+              {actions}
+            </div>
+          ) : null)}
+      </div>
     </header>
   );
 }
@@ -48,73 +197,27 @@ export function DirectorySectionHeader({
   );
 }
 
-export function SystemIcon({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "grid size-9 shrink-0 place-items-center border border-border bg-surface-elevated",
-        className,
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
 export function WorkspaceHeader({
   system,
   workspaceId,
   status,
-  backTo,
-  icon,
   meta,
   actions,
 }: {
-  system: string;
+  system: SystemId;
   workspaceId: string;
   status: string;
-  backTo: "/redis" | "/plc" | "/wad" | "/minesweeper";
-  icon: ReactNode;
   meta?: ReactNode;
   actions?: ReactNode;
 }) {
   return (
-    <>
-      <AppHeader currentSystem={system} />
-      <div className="workspace-header">
-        <div className="flex min-w-0 items-center gap-3">
-          <Link
-            to={backTo}
-            className="icon-button shrink-0"
-            aria-label={`Back to ${system} workspaces`}
-          >
-            <ArrowLeft className="size-4" />
-          </Link>
-          <div className="system-glyph shrink-0">{icon}</div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm font-semibold tracking-tight">{system}</h1>
-              <StatusDot status={status} />
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                {status}
-              </span>
-            </div>
-            <div className="flex min-w-0 items-center gap-2 font-mono text-[11px] text-muted-foreground">
-              <Box className="size-3 shrink-0" />
-              <span className="truncate">{workspaceId}</span>
-              {meta ? <><span className="text-border">/</span>{meta}</> : null}
-            </div>
-          </div>
-        </div>
-        {actions ? <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div> : null}
-      </div>
-    </>
+    <AppHeader
+      currentSystem={system}
+      workspaceId={workspaceId}
+      workspaceMeta={meta}
+      status={status}
+      actions={actions}
+    />
   );
 }
 

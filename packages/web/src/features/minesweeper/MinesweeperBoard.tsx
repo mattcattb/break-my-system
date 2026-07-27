@@ -22,15 +22,15 @@ type MinesweeperBoardProps = {
 const numberColor = (value: number) =>
   [
     "",
-    "text-[#63e6be]",
-    "text-[#ffc857]",
-    "text-[#ff7085]",
-    "text-[#a99cff]",
-    "text-[#ff9f68]",
-    "text-[#6edff6]",
-    "text-[#edf7f5]",
-    "text-[#8296a6]",
-  ][value] ?? "text-[#edf7f5]";
+    "text-[#73daca]",
+    "text-[#e0af68]",
+    "text-[#f7768e]",
+    "text-[#bb9af7]",
+    "text-orange-400",
+    "text-cyan-400",
+    "text-foreground",
+    "text-muted-foreground",
+  ][value] ?? "text-foreground";
 
 function HiddenMinesweeperTile({
   tile,
@@ -48,7 +48,7 @@ function HiddenMinesweeperTile({
   return (
     <button
       type="button"
-      className="grid size-[var(--mine-cell-size)] select-none place-items-center rounded-[7px] border border-[#26394a] bg-[#203142] text-[#ffc857] shadow-[0_3px_0_#091018] transition-all hover:-translate-y-px hover:border-[#63e6be] hover:bg-[#273b4d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#63e6be]/60 disabled:cursor-not-allowed disabled:opacity-60"
+      className="grid size-[var(--mine-cell-size)] select-none place-items-center border border-border bg-surface-elevated text-[#e0af68] transition-colors hover:border-[#73daca] hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#73daca]/60 disabled:cursor-not-allowed disabled:opacity-60"
       disabled={disabled}
       aria-label={label}
       onClick={() => onReveal(tile.row, tile.col)}
@@ -68,7 +68,7 @@ function RevealedMinesweeperTile({tile}: {tile: RevealedTile}) {
   if (tile.value === "mine") {
     return (
       <div
-        className="grid size-[var(--mine-cell-size)] place-items-center rounded-[6px] bg-[#321923] text-[#ff7085]"
+        className="grid size-[var(--mine-cell-size)] place-items-center border border-danger/30 bg-danger/10 text-danger"
         aria-label={`Mine at row ${tile.row + 1}, column ${tile.col + 1}`}
       >
         <Bomb className="size-[45%]" />
@@ -79,7 +79,7 @@ function RevealedMinesweeperTile({tile}: {tile: RevealedTile}) {
   return (
     <div
       className={cn(
-        "grid size-[var(--mine-cell-size)] place-items-center rounded-[6px] bg-[#0c1721] font-mono text-[11px] font-bold",
+        "grid size-[var(--mine-cell-size)] place-items-center border border-border bg-background font-mono text-[11px] font-semibold",
         numberColor(tile.value),
       )}
       aria-label={`${tile.value} adjacent mines at row ${tile.row + 1}, column ${tile.col + 1}`}
@@ -121,8 +121,8 @@ export function MinesweeperBoard({
   onToggleFlag,
 }: MinesweeperBoardProps) {
   return (
-    <div className="max-w-full overflow-x-auto rounded-[1.75rem] border border-[#26394a] bg-[#111c28] p-3 shadow-[0_24px_60px_rgba(0,0,0,0.18)] sm:p-6">
-      <div className="mx-auto w-max rounded-2xl bg-[#091018] p-2.5 [--mine-cell-size:1.9rem] sm:p-3 sm:[--mine-cell-size:2.2rem]">
+    <div className="max-w-full overflow-x-auto border border-border bg-surface p-3 sm:p-6">
+      <div className="mx-auto w-max border border-border bg-background p-2.5 [--mine-cell-size:1.9rem] sm:p-3 sm:[--mine-cell-size:2.2rem]">
         <div
           className="grid gap-1"
           style={{

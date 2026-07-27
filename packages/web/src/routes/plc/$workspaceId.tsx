@@ -1,6 +1,6 @@
 import {useMutation, useQuery} from "@tanstack/react-query";
 import {createFileRoute, redirect, useNavigate} from "@tanstack/react-router";
-import {Braces, Play, RotateCcw, TerminalSquare, Trash2} from "lucide-react";
+import {Play, RotateCcw, TerminalSquare, Trash2} from "lucide-react";
 import {DetailedError, parseResponse} from "hono/client";
 import {useState} from "react";
 import {PanelHeading, WorkspaceHeader} from "../../components/common/SystemShell";
@@ -82,11 +82,9 @@ function PlcWorkspacePage() {
   return (
     <div className="system-interface flex h-dvh min-h-[32rem] flex-col overflow-hidden bg-background">
       <WorkspaceHeader
-        system="PLC Runtime"
+        system="plc"
         workspaceId={workspaceId}
         status={status}
-        backTo="/plc"
-        icon={<Braces className="size-4 text-violet-400" />}
         meta="persistent evaluator scope"
         actions={
           <>

@@ -99,7 +99,11 @@
 
 @layer components {
   .app-header {
-    @apply sticky top-0 z-40 flex h-12 items-center justify-between border-b border-border bg-background px-4 sm:px-5;
+    @apply sticky top-0 z-40 border-b border-border bg-background;
+  }
+
+  .app-header-inner {
+    @apply mx-auto flex min-h-[4.5rem] w-full max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6;
   }
 
   .brand-lockup {
@@ -107,35 +111,28 @@
   }
 
   .brand-mark {
-    @apply grid size-6 grid-cols-3 items-end gap-0.5 border border-border bg-surface p-1;
+    @apply grid size-7 shrink-0 grid-cols-3 items-end gap-0.5 py-0.5;
+    filter: brightness(0.82) saturate(1.08);
   }
 
   .brand-mark span {
-    @apply bg-primary;
+    @apply rounded-[1px];
   }
 
-  .brand-mark span:nth-child(1) { height: 45%; }
-  .brand-mark span:nth-child(2) { height: 100%; }
-  .brand-mark span:nth-child(3) { height: 68%; background: hsl(var(--accent)); }
+  .brand-mark span:nth-child(1) { height: 45%; background: linear-gradient(to top, #f7768e 0 50%, #bb9af7 50% 100%); }
+  .brand-mark span:nth-child(2) { height: 100%; background: #e0af68; }
+  .brand-mark span:nth-child(3) { height: 68%; background: linear-gradient(to top, #7dcfff 0 50%, #73daca 50% 100%); }
+
+  .brand-eyebrow {
+    @apply block font-mono text-[8px] uppercase tracking-[0.17em] text-muted-foreground;
+  }
 
   .brand-name {
-    @apply block font-display text-[12px] font-bold tracking-[0.15em];
+    @apply block text-sm font-semibold tracking-tight;
   }
 
   .brand-subtitle {
     @apply hidden font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground sm:block;
-  }
-
-  .system-switcher {
-    @apply flex h-8 items-center gap-2 border border-border bg-surface px-2.5 font-mono text-[10px] uppercase tracking-wider hover:border-primary/50 hover:bg-muted;
-  }
-
-  .workspace-header {
-    @apply flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-border bg-surface/90 px-4 py-2.5 backdrop-blur-sm sm:px-5;
-  }
-
-  .system-glyph {
-    @apply flex size-9 items-center justify-center border border-primary/35 bg-primary/10 text-primary;
   }
 
   .icon-button {

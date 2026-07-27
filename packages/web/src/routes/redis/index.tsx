@@ -4,7 +4,6 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
-  Database,
   Plus,
   TerminalSquare,
 } from "lucide-react";
@@ -13,7 +12,6 @@ import {useEffect, useState} from "react";
 import {
   AppHeader,
   DirectorySectionHeader,
-  SystemIcon,
 } from "../../components/common/SystemShell";
 import {Button} from "../../components/ui/button";
 import {cn} from "../../lib/cn";
@@ -53,23 +51,13 @@ function RedisIndexPage() {
 
   return (
     <div className="system-interface workshop-page">
-      <AppHeader currentSystem="Go Redis" />
-      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-8 flex items-center gap-3">
-          <SystemIcon className="text-[#f7768e]">
-            <Database className="size-4" />
-          </SystemIcon>
-          <div className="min-w-0">
-            <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
-              REDIS / GO · RESP · TCP
-            </p>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight">Go Redis</h1>
-          </div>
-          <span className="ml-auto font-mono text-[9px] text-muted-foreground">
-            {workspaces.length} {workspaces.length === 1 ? "workspace" : "workspaces"}
-          </span>
-        </div>
-
+      <AppHeader
+        currentSystem="redis"
+        trailing={<span className="font-mono text-[9px] text-muted-foreground">
+          {workspaces.length} {workspaces.length === 1 ? "workspace" : "workspaces"}
+        </span>}
+      />
+      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
         <section className="mb-5 border border-border bg-surface">
           <DirectorySectionHeader title="New workspace" />
           <div className="flex flex-wrap items-center gap-4 p-4">
