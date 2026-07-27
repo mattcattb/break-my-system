@@ -50,6 +50,131 @@ services:
       timeout: 5s
       retries: 5
 
+
+  torrent-tracker:
+    image: go-torrent-tracker:local
+    build:
+      context: ./systems/go-torrent
+      dockerfile: Dockerfile.tracker
+    restart: unless-stopped
+    environment:
+      TRACKER_LISTEN: ":6969"
+      TRACKER_STATUS_LISTEN: ":8080"
+      TRACKER_INTERVAL: ${TORRENT_TRACKER_INTERVAL:-1s}
+      TRACKER_TORRENT_DIR: /artifacts
+    volumes:
+      - ${TORRENT_ARTIFACT_DIR:-./systems/go-torrent/artifacts/lesson-payload-v1}:/artifacts:ro
+    ports:
+      - "${TORRENT_TRACKER_HOST_PORT:-16969}:6969"
+      - "127.0.0.1:${TORRENT_TRACKER_STATUS_HOST_PORT:-18080}:8080"
+    networks:
+      bms-runtime:
+        aliases:
+          - tracker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/health"]
+      interval: 2s
+      timeout: 1s
+      retries: 10
+
+  torrent-seeder:
+    image: go-torrent-client:local
+    build:
+      context: ./systems/go-torrent
+      dockerfile: Dockerfile.torrent
+    restart: unless-stopped
+    command:
+      - seed
+      - -listen
+      - :6881
+      - -status-listen
+      - :8080
+      - -data
+      - /artifacts/lesson-payload-v1.bin
+      - /artifacts/lesson-payload-v1.torrent
+    volumes:
+      - ${TORRENT_ARTIFACT_DIR:-./systems/go-torrent/artifacts/lesson-payload-v1}:/artifacts:ro
+    ports:
+      - "127.0.0.1:${TORRENT_SEED_STATUS_HOST_PORT:-18081}:8080"
+    networks:
+      - bms-runtime
+    depends_on:
+      torrent-tracker:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 6881"]
+      interval: 1s
+      timeout: 1s
+      retries: 10
+
+  torrent-learner-1:
+    image: go-torrent-client:local
+    pull_policy: never
+    restart: unless-stopped
+    command:
+      - download
+      - -listen
+      - :6881
+      - -status-listen
+      - :8080
+      - -output
+      - /data/lesson-payload-v1.bin
+      - /artifacts/lesson-payload-v1.torrent
+    volumes:
+      - ${TORRENT_ARTIFACT_DIR:-./systems/go-torrent/artifacts/lesson-payload-v1}/lesson-payload-v1.torrent:/artifacts/lesson-payload-v1.torrent:ro
+    ports:
+      - "127.0.0.1:${TORRENT_LEARNER_1_STATUS_HOST_PORT:-18082}:8080"
+    networks:
+      - bms-runtime
+    depends_on:
+      torrent-tracker:
+        condition: service_healthy
+      torrent-seeder:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "echo '556c4f1388fd6ad7b9f5e78ed5da7eda13e7b231f0e0be99d639b7ba1b4d0b45  /data/lesson-payload-v1.bin' | sha256sum -c -",
+        ]
+      interval: 1s
+      timeout: 1s
+      retries: 20
+
+  torrent-learner-2:
+    image: go-torrent-client:local
+    pull_policy: never
+    restart: unless-stopped
+    command:
+      - download
+      - -listen
+      - :6881
+      - -status-listen
+      - :8080
+      - -output
+      - /data/lesson-payload-v1.bin
+      - /artifacts/lesson-payload-v1.torrent
+    volumes:
+      - ${TORRENT_ARTIFACT_DIR:-./systems/go-torrent/artifacts/lesson-payload-v1}/lesson-payload-v1.torrent:/artifacts/lesson-payload-v1.torrent:ro
+    ports:
+      - "127.0.0.1:${TORRENT_LEARNER_2_STATUS_HOST_PORT:-18083}:8080"
+    networks:
+      - bms-runtime
+    depends_on:
+      torrent-tracker:
+        condition: service_healthy
+      torrent-seeder:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "echo '556c4f1388fd6ad7b9f5e78ed5da7eda13e7b231f0e0be99d639b7ba1b4d0b45  /data/lesson-payload-v1.bin' | sha256sum -c -",
+        ]
+      interval: 1s
+      timeout: 1s
+      retries: 20
+
   plc:
     image: mattbou12/plc-runtime:1.0.0
     restart: unless-stopped
@@ -108,3 +233,7 @@ volumes:
   postgres-data:
   redis-data:
   minesweeper-data:
+
+networks:
+  bms-runtime:
+    name: bms-runtime

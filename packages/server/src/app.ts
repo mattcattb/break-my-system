@@ -8,6 +8,7 @@ import {plcController} from "./plc/plc.controller";
 import {redisWsController} from "./redis/redis.ws";
 import {minesweeperController} from "./minesweeper/minesweeper.controller";
 import {minesweeperWsController} from "./minesweeper/minesweeper.ws";
+import {torrentController} from "./torrent/torrent.controller";
 
 export const app = createRouter();
 addGlobalMiddlewares(app);
@@ -19,7 +20,8 @@ export const api = app
   .route("/redis/workspaces", redisWorkspaceController)
   .route("/wad", wadController)
   .route("/minesweeper", minesweeperController)
-  .route("/plc", plcController);
+  .route("/plc", plcController)
+  .route("/torrent", torrentController);
 
 app.route("/ws/redis", redisWsController);
 app.route("/ws/minesweeper", minesweeperWsController);
